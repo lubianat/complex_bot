@@ -17,15 +17,24 @@ datasets = get_complex_portal_datasets()
 
 def process_species_complextab(complextab_dataframe):
     """Clean and process complextab data
-    Takes in a complextab dataframe from one of the species datasets,
-    removes entries present in Wikidata and processes it into a "long"
+
+    Removes entries present in Wikidata and processes it into a "long"
     format, more friendly for editing.
+
+    Args:
+        complextab_dataframe (DataFrame): one of the species datasets,
+
     """
     species_missing_raw = return_missing_from_wikidata(complextab_dataframe)
 
-    # Cleaning molecules column, they follow this format: uniprot_id(quantity)|another_uniprot_id(n)...
+    # Cleaning molecules column, they follow this format: 
+    # uniprot_id(quantity)|another_uniprot_id(n)...
     molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
+    species_missing = separate_columns(species_missing_raw, molecules_column)
 
+    return species_missing
+
+def separate_columns(species_missing_raw, molecules_column):
     species_missing_raw[molecules_column] = species_missing_raw[
         molecules_column
     ].str.split("|")
@@ -48,11 +57,9 @@ def process_species_complextab(complextab_dataframe):
         .agg(has_part_quantity=pd.NamedAgg("has_part_quantity", "count"))
         .reset_index()
     )
-
     return species_missing
 
 
-# %%
 cov2_complextab = pd.read_table(datasets["sars-cov-2"], na_values=["-"])
 cov2 = process_species_complextab(cov2_complextab)
 cov2["found_in_taxon"] = [
@@ -64,7 +71,6 @@ cov2["has_part"] = [
     for uniprot_id in cov2["uniprot_id"].to_list()
 ]
 
-# %%
 # Make a dataframe for each unique complex
 complex_dfs = [
     cov2[cov2["#Complex ac"] == unique_complex].reset_index()
@@ -78,22 +84,31 @@ wikidata_time = strftime("+%Y-%m-%dT00:00:00Z", gmtime())
 retrieved = wdi_core.WDTime(wikidata_time, prop_nr="P813", is_reference=True)
 references = [stated_in, retrieved]
 
+
 for df in complex_dfs:
 
-    current_complex = df["#Complex ac"].unique()[0]
+    update_complex(df, references)
+
+
+def update_complex(complex_dataframe, references):
+    """
+    Args:
+        complex_dataframe (DataFrame): information about a complex properly formatted. 
+    """
+    current_complex = complex_dataframe["#Complex ac"].unique()[0]
+    taxon_id = complex_dataframe["found_in_taxon"][0]
+    components = df["has_part"]
 
     instance_of = wdi_core.WDItemID(value="Q22325163", prop_nr="P31")
-
-    found_in_taxon = wdi_core.WDItemID(value=df["found_in_taxon"][0], prop_nr="P703")
-
-    complexportalid = wdi_core.WDString(
+    found_in_taxon = wdi_core.WDItemID(value=taxon_id, prop_nr="P703")
+    complex_portal_id = wdi_core.WDString(
         value=current_complex, prop_nr="P7718", references=references
     )
 
-    data = [instance_of, found_in_taxon, complexportalid]
+    data = [instance_of, found_in_taxon, complex_portal_id]
 
     has_parts = [
-        wdi_core.WDItemID(value=protein, prop_nr="P703") for protein in df["has_part"]
+        wdi_core.WDItemID(value=protein, prop_nr="P703") for protein in components
     ]
 
     data.extend(has_parts)

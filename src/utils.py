@@ -3,7 +3,7 @@
 # https://github.com/jvfe/wdt_contribs/tree/master/complex_portal/src
 
 
-rom wikidataintegrator.wdi_core import WDItemEngine
+from wikidataintegrator.wdi_core import WDItemEngine
 from collections import defaultdict
 from functools import lru_cache, reduce
 from ftplib import FTP
@@ -77,9 +77,8 @@ def get_complex_portal_datasets():
 
 
 def return_missing_from_wikidata(complexp_dataframe):
-    """Merges dataset with the dataframe from get_wikidata_complexes
-    This merge will return only complex portal entities that seemingly
-    don't have wikidata equivalents.
+    """
+    Return complex portal entities that don't have Wikidata links.
     """
     wikidata_complexes = get_wikidata_complexes()
 
