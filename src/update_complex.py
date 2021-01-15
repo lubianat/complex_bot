@@ -22,4 +22,4 @@ references = utils.prepare_refs()
 
 for protein_complex in list_of_complexes:
     print(protein_complex.complex_id)
-#    utils.update_complex(df, references)
+    utils.update_complex(protein_complex, references)

@@ -194,28 +194,56 @@ def return_missing_from_wikidata(complexp_dataframe):
     return missing_from_wikidata
 
 
-def update_complex(complex_dataframe, references):
+def update_complex(protein_complex, references):
     """
     Args:
         complex_dataframe (DataFrame): information about a complex properly formatted. 
     """
-    current_complex = complex_dataframe["#Complex ac"].unique()[0]
-    taxon_id = complex_dataframe["found_in_taxon"][0]
-    components = complex_dataframe["has_part"]
+    instance_of = wdi_core.WDItemID(
+        value="Q22325163", prop_nr="P31", references=references
+        )
 
-    instance_of = wdi_core.WDItemID(value="Q22325163", prop_nr="P31")
-    found_in_taxon = wdi_core.WDItemID(value=taxon_id, prop_nr="P703")
+    found_in_taxon = wdi_core.WDItemID(
+        value=protein_complex.taxon_qid, prop_nr="P703", references=references
+        )
+
     complex_portal_id = wdi_core.WDString(
-        value=current_complex, prop_nr="P7718", references=references
+        value=protein_complex.complex_id, prop_nr="P7718", references=references
     )
 
     data = [instance_of, found_in_taxon, complex_portal_id]
 
-    has_parts = [
-        wdi_core.WDItemID(value=protein, prop_nr="P703") for protein in components
-    ]
+    has_parts = []
+    for component in protein_complex.list_of_components:
+
+        quantity = component.quantity
+        component_qiq = component.qid
+        quantity_qualifier = wdi_core.WDQuantity(
+            value=quantity, prop_nr="P1114", is_qualifier=True
+            )
+        statement = wdi_core.WDItemID(
+            value=component_qiq, prop_nr="P703",
+            qualifiers=[quantity_qualifier], references=references
+            )
+        has_parts.append(statement)
 
     data.extend(has_parts)
+
+    # Reference table via https://w.wiki/uW2
+    go_statements = []
+
+    go_reference = pd.read_csv("./reference_go_terms.csv")
+    for go_term in protein_complex.go_ids:
+        print(go_term)
+        # Considers  that each term has only one GO type
+        obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
+        prop =   go_reference[go_reference["id"] == go_term]["go_props"].values[0]
+        statement = wdi_core.WDItemID(
+            value=obj, prop_nr=prop, references=references
+            )
+        go_statements.append(statement)
+    
+    data.extend(go_statements)
 
     # wd_item = wdi_core.WDItemEngine(data=data)
     # wd_item.write(login_instance)
