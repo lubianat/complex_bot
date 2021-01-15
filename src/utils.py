@@ -9,7 +9,7 @@ from collections import defaultdict
 from functools import lru_cache, reduce
 from ftplib import FTP
 import pandas as pd
-
+import re
 
 def get_wikidata_complexes():
     """Gets all Wikidata items with a Complex Portal ID property"""
@@ -108,6 +108,7 @@ def return_missing_from_wikidata(complexp_dataframe):
         "Recommended name",
         "Aliases for complex",
         "Taxonomy identifier",
+        "Go Annotations",
         "Identifiers (and stoichiometry) of molecules in complex",
         "Description",
     ]
@@ -134,8 +135,21 @@ def process_species_complextab(complextab_dataframe):
     molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
     species_table = separate_molecules_column(species_table_raw, molecules_column)
 
+
     go_column = "Go Annotations"
-    print(species_table_raw.head(2)[go_column])
+
+    def extract_go_ids(go_string):
+        go_list = re.findall(pattern="GO:[0-9]*", string=go_string)
+        return go_list
+
+    print(species_table_raw[go_column])
+    go_ids = [extract_go_ids(go_string) for go_string in species_table_raw[go_column]]
+    # print(go_ids)
+    # species_table["go_ids"] = go_ids
+    # species_table["aliases"] = species_table_raw["Aliases for complex"]
+    # print(species_table.head(2).explode("go_ids"))
+
+
     return species_table
 
 def separate_molecules_column(species_missing_raw, molecules_column):
@@ -153,6 +167,8 @@ def separate_molecules_column(species_missing_raw, molecules_column):
         molecules_column
     ].str.replace(r"\(.*\)", "")
 
+    
+    print(species_missing_raw)
     # Also need to group the resulting molecules, to avoid duplicates
     species_missing = (
         species_missing_raw.groupby(
@@ -161,6 +177,7 @@ def separate_molecules_column(species_missing_raw, molecules_column):
         .agg(has_part_quantity=pd.NamedAgg("has_part_quantity", "count"))
         .reset_index()
     )
+    print(species_missing)
     return species_missing
 
 def update_complex(complex_dataframe, references):
