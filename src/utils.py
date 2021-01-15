@@ -135,7 +135,7 @@ def process_species_complextab(complextab_dataframe):
     species_table = separate_molecules_column(species_table_raw, molecules_column)
 
     go_column = "Go Annotations"
-    print(species_table_raw.head(2))
+    print(species_table_raw.head(2)[go_column])
     return species_table
 
 def separate_molecules_column(species_missing_raw, molecules_column):
