@@ -10,7 +10,7 @@ from functools import lru_cache, reduce
 from ftplib import FTP
 import pandas as pd
 import re
-
+import math
 
 class ComplexComponent():
     def __init__(self,uniprot_id,quantity):
@@ -52,9 +52,12 @@ class Complex():
 
     def get_go_ids(self):
         go_column = "Go Annotations"
-        go_string = self.info[go_column].values[0]
-        go_list = re.findall(pattern="GO:[0-9]*", string=go_string)
-        self.go_ids = go_list
+        try:
+            go_string = self.info[go_column].values[0]
+            go_list = re.findall(pattern="GO:[0-9]*", string=go_string)
+            self.go_ids = go_list
+        except:
+            print(f"No GOs for {self.complex_id}")
 
     def get_wikidata_ids(self):
         
@@ -78,7 +81,18 @@ def get_list_of_complexes(datasets, species_id):
     """
     table_of_complexes_raw = pd.read_table(datasets[species_id], na_values=["-"])
 
-    table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
+    # table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
+    keep = [
+        "#Complex ac",
+        "Recommended name",
+        "Aliases for complex",
+        "Taxonomy identifier",
+        "Go Annotations",
+        "Identifiers (and stoichiometry) of molecules in complex",
+        "Description",
+    ]
+
+    table_of_complexes_raw = table_of_complexes_raw[keep]
 
     list_of_complexes = []
 
@@ -194,7 +208,7 @@ def return_missing_from_wikidata(complexp_dataframe):
     return missing_from_wikidata
 
 
-def update_complex(protein_complex, references):
+def update_complex(login_instance, protein_complex, references):
     """
     Args:
         complex_dataframe (DataFrame): information about a complex properly formatted. 
@@ -217,14 +231,32 @@ def update_complex(protein_complex, references):
     for component in protein_complex.list_of_components:
 
         quantity = component.quantity
-        component_qiq = component.qid
-        quantity_qualifier = wdi_core.WDQuantity(
-            value=quantity, prop_nr="P1114", is_qualifier=True
-            )
-        statement = wdi_core.WDItemID(
-            value=component_qiq, prop_nr="P703",
-            qualifiers=[quantity_qualifier], references=references
-            )
+        component_qid = component.qid
+        print(component_qid)
+
+        def isNaN(string):
+            return string != string
+
+        if isNaN(component_qid):
+            break
+            
+        if quantity != "0" and not math.isnan(int(quantity)):
+            print(quantity)
+        # Quantity is valid. 0 represents unknown in Complex Portal.
+
+            quantity_qualifier = wdi_core.WDQuantity(
+                value=int(quantity), prop_nr="P1114", is_qualifier=True
+                )
+            statement = wdi_core.WDItemID(
+                value=component_qid, prop_nr="P527",
+                qualifiers=[quantity_qualifier], references=references
+                )
+        else:
+            statement = wdi_core.WDItemID(
+                value=component_qid, prop_nr="P527",
+                 references=references
+                )
+
         has_parts.append(statement)
 
     data.extend(has_parts)

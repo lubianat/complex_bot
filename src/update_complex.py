@@ -22,4 +22,4 @@ references = utils.prepare_refs(species_id="2697049")
 
 for protein_complex in list_of_complexes:
     print(protein_complex.complex_id)
-    utils.update_complex(protein_complex, references)
+    utils.update_complex(login_instance, protein_complex, references)
