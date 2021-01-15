@@ -18,7 +18,7 @@ list_of_complexes = utils.get_list_of_complexes(dataset_urls, species_id="269704
 login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 
 # Update Wikidata
-references = utils.prepare_refs()
+references = utils.prepare_refs(species_id="2697049")
 
 for protein_complex in list_of_complexes:
     print(protein_complex.complex_id)

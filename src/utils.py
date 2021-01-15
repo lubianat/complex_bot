@@ -59,7 +59,7 @@ class Complex():
     def get_wikidata_ids(self):
         
         # NCBI taxonomy ID (P685)
-        tax_id = self.info["Taxonomy identifier"].values[0]    
+        tax_id = self.info["Taxonomy identifier"].values[0]   
         self.taxon_qid = get_wikidata_item_by_propertyvalue("P685", int(tax_id))
 
    
@@ -246,7 +246,7 @@ def update_complex(protein_complex, references):
 
     if protein_complex.complex_id == "CPX-5742":
         wd_item = wdi_core.WDItemEngine(data=data)
-        wd_item.write(login_instance)
+        # wd_item.write(login_instance)
 
 
 def split_complexes(species_dataframe):
@@ -256,11 +256,18 @@ def split_complexes(species_dataframe):
     ]
     return(complex_dfs)   
 
-def prepare_refs():
+def prepare_refs(species_id):
     stated_in = wdi_core.WDItemID(value="Q47196990", prop_nr="P248", is_reference=True)
     wikidata_time = strftime("+%Y-%m-%dT00:00:00Z", gmtime())
     retrieved = wdi_core.WDTime(wikidata_time, prop_nr="P813", is_reference=True)
-    references = [stated_in, retrieved]
+    
+    ftp_url = "ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/current/complextab"
+    ref_url = wdi_core.WDString(ftp_url, prop_nr="P854", is_reference=True)
+
+    filename_in_archive = f"{species_id}.tsv"
+    ref_filename = wdi_core.WDString(filename_in_archive, prop_nr="P7793", is_reference=True)
+
+    references = [[stated_in, retrieved,ref_url,ref_filename]]
     return references
 
    
