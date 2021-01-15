@@ -108,23 +108,30 @@ def main():
         ]
         return(complex_dfs)   
 
-if __name__ == "__main__":
-    main()
-    
-    datasets = get_complex_portal_datasets()
 
-    species_dataframe = prepare_species_dataframe(datasets, species_id="sars-cov-2")
-
-    # Make a dataframe for each unique complex
-    complex_dfs = split_complexes(species_dataframe)
-
-    login_instance = wdi_login.WDLogin(user='<bot user name>', pwd='<bot password>')
-
+def prepare_refs():
     stated_in = wdi_core.WDItemID(value="Q47196990", prop_nr="P248", is_reference=True)
     wikidata_time = strftime("+%Y-%m-%dT00:00:00Z", gmtime())
     retrieved = wdi_core.WDTime(wikidata_time, prop_nr="P813", is_reference=True)
     references = [stated_in, retrieved]
+    return references
 
+if __name__ == "__main__":
+    main()
+    
+    # Make a dataframe for  all complexes of a species
+    datasets = get_complex_portal_datasets()
+
+    # Make a dataframe for with all complexes of a givenspecies
+    species_dataframe = prepare_species_dataframe(datasets, species_id="sars-cov-2")
+
+    # Split in a list of unique complexes
+    complex_dfs = split_complexes(species_dataframe)
+
+    login_instance = wdi_login.WDLogin(user='<bot user name>', pwd='<bot password>')
+
+    # Update Wikidata
+    references = prepare_refs()
 
     for df in complex_dfs:
 
