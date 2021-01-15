@@ -246,7 +246,7 @@ def update_complex(protein_complex, references):
 
     if protein_complex.complex_id == "CPX-5742":
         wd_item = wdi_core.WDItemEngine(data=data)
-        # wd_item.write(login_instance)
+        wd_item.write(login_instance)
 
 
 def split_complexes(species_dataframe):
