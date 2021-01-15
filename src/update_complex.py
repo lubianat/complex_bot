@@ -86,7 +86,7 @@ def main():
         # wd_item.write(login_instance)
 
 
-    def prepare_species_dataframe(species_id="sars-cov-2"):
+    def prepare_species_dataframe(datasets, species_id="sars-cov-2"):
         species_complex_table = pd.read_table(datasets[species_id], na_values=["-"])
         processed_complex_table = process_species_complextab(species_complex_table)
 
@@ -101,17 +101,22 @@ def main():
         ]
         return processed_complex_table
 
+    def split_complexes(species_dataframe):
+        complex_dfs = [
+        species_dataframe[species_dataframe["#Complex ac"] == unique_complex].reset_index()
+        for unique_complex in species_dataframe["#Complex ac"].unique()
+        ]
+        return(complex_dfs)   
+
 if __name__ == "__main__":
     main()
+    
     datasets = get_complex_portal_datasets()
 
-    cov2 = prepare_species_dataframe()
+    species_dataframe = prepare_species_dataframe(datasets, species_id="sars-cov-2")
 
     # Make a dataframe for each unique complex
-    complex_dfs = [
-        cov2[cov2["#Complex ac"] == unique_complex].reset_index()
-        for unique_complex in cov2["#Complex ac"].unique()
-    ]
+    complex_dfs = split_complexes(species_dataframe)
 
     login_instance = wdi_login.WDLogin(user='<bot user name>', pwd='<bot password>')
 
