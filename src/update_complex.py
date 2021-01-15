@@ -12,16 +12,14 @@ dataset_urls = utils.get_complex_portal_dataset_urls()
 
 # Make a dataframe for with all complexes of a given species
 # 2697049 is SARS-CoV-2
-species_dataframe = utils.prepare_species_dataframe(dataset_urls, species_id="2697049")
+list_of_complexes = utils.get_list_of_complexes(dataset_urls, species_id="2697049")
 
-# Split in a list of unique complexes
-complex_dfs = utils.split_complexes(species_dataframe)
 
 login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 
 # Update Wikidata
 references = utils.prepare_refs()
 
-for df in complex_dfs:
-    print(df["#Complex ac"].unique()[0])
-    utils.update_complex(df, references)
+for protein_complex in list_of_complexes:
+    print(protein_complex.complex_id)
+#    utils.update_complex(df, references)

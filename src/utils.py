@@ -11,6 +11,83 @@ from ftplib import FTP
 import pandas as pd
 import re
 
+
+class ComplexComponent():
+    def __init__(self,uniprot_id,quantity):
+        self.uniprot_id = uniprot_id
+        self.quantity = quantity
+        self.get_qid_for_component()
+
+    def get_qid_for_component(self):
+        # UniProt protein ID (P352)
+        self.qid = get_wikidata_item_by_propertyvalue("P352", self.uniprot_id)
+
+class Complex():
+    def __init__(self, dataset, complex_id):
+        self.complex_id = complex_id
+        self.info = dataset[dataset["#Complex ac"] == complex_id]
+        self.list_of_components=[]
+        self.go_ids = []
+        self.get_components()
+        self.get_go_ids()
+        self.get_wikidata_ids()
+
+    def get_components(self):
+        molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
+        molecules_string = self.info[molecules_column].values[0]
+        molecules = molecules_string.split("|")
+
+        print(molecules)
+
+        matches = [re.search('\((.*)\)', i) for i in molecules]
+        quantities = [m.group(1) for m in matches]
+    
+        matches = [re.search('(.*)\(.*\)', i) for i in molecules]
+        uniprot_ids = [m.group(1) for m in matches]
+        
+        component_and_quantities = dict(zip(uniprot_ids, quantities))
+        for uniprot_id in component_and_quantities:
+            component = ComplexComponent(uniprot_id, component_and_quantities[uniprot_id]) 
+            self.list_of_components.append(component)
+
+    def get_go_ids(self):
+        go_column = "Go Annotations"
+        go_string = self.info[go_column].values[0]
+        go_list = re.findall(pattern="GO:[0-9]*", string=go_string)
+        self.go_ids = go_list
+
+    def get_wikidata_ids(self):
+        
+        # NCBI taxonomy ID (P685)
+        tax_id = self.info["Taxonomy identifier"].values[0]    
+        self.taxon_qid = get_wikidata_item_by_propertyvalue("P685", int(tax_id))
+
+   
+def get_list_of_complexes(datasets, species_id):
+    """Clean and process table of complexes
+
+    Parses table of complexes into Complex classes
+
+    Args:
+        complextab_dataframe (DataFrame): one of the species datasets
+
+    Returns
+        list_of_complexes (list): Objects of the Complex class
+
+
+    """
+    table_of_complexes_raw = pd.read_table(datasets[species_id], na_values=["-"])
+
+    table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
+
+    list_of_complexes = []
+
+    for complex_id in table_of_complexes_raw["#Complex ac"]:
+        list_of_complexes.append(Complex(table_of_complexes_raw, complex_id))
+
+    return list_of_complexes
+
+
 def get_wikidata_complexes():
     """Gets all Wikidata items with a Complex Portal ID property"""
 
@@ -28,7 +105,6 @@ def get_wikidata_complexes():
     ).replace({"http://www.wikidata.org/entity/": ""}, regex=True)
 
     return wikidata_complexes
-
 
 @lru_cache(maxsize=None)
 def get_wikidata_item_by_propertyvalue(property, value):
@@ -118,68 +194,6 @@ def return_missing_from_wikidata(complexp_dataframe):
     return missing_from_wikidata
 
 
-def process_species_complextab(complextab_dataframe):
-    """Clean and process complextab data
-
-    Removes entries present in Wikidata and processes it into a "long"
-    format, more friendly for editing.
-
-    Args:
-        complextab_dataframe (DataFrame): one of the species datasets,
-
-    """
-    species_table_raw = return_missing_from_wikidata(complextab_dataframe)
-
-    # Cleaning molecules column, they follow this format: 
-    # uniprot_id(quantity)|another_uniprot_id(n)...
-    molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
-    species_table = separate_molecules_column(species_table_raw, molecules_column)
-
-
-    go_column = "Go Annotations"
-
-    def extract_go_ids(go_string):
-        go_list = re.findall(pattern="GO:[0-9]*", string=go_string)
-        return go_list
-
-    print(species_table_raw[go_column])
-    go_ids = [extract_go_ids(go_string) for go_string in species_table_raw[go_column]]
-    # print(go_ids)
-    # species_table["go_ids"] = go_ids
-    # species_table["aliases"] = species_table_raw["Aliases for complex"]
-    # print(species_table.head(2).explode("go_ids"))
-
-
-    return species_table
-
-def separate_molecules_column(species_missing_raw, molecules_column):
-    species_missing_raw[molecules_column] = species_missing_raw[
-        molecules_column
-    ].str.split("|")
-
-    species_missing_raw = species_missing_raw.explode(molecules_column)
-
-    species_missing_raw["has_part_quantity"] = species_missing_raw[
-        molecules_column
-    ].str.extract(r"\(([\d]+)\)", expand=False)
-
-    species_missing_raw["uniprot_id"] = species_missing_raw[
-        molecules_column
-    ].str.replace(r"\(.*\)", "")
-
-    
-    print(species_missing_raw)
-    # Also need to group the resulting molecules, to avoid duplicates
-    species_missing = (
-        species_missing_raw.groupby(
-            ["#Complex ac", "Recommended name", "Taxonomy identifier", "uniprot_id"]
-        )
-        .agg(has_part_quantity=pd.NamedAgg("has_part_quantity", "count"))
-        .reset_index()
-    )
-    print(species_missing)
-    return species_missing
-
 def update_complex(complex_dataframe, references):
     """
     Args:
@@ -207,28 +221,12 @@ def update_complex(complex_dataframe, references):
     # wd_item.write(login_instance)
 
 
-def prepare_species_dataframe(datasets, species_id="sars-cov-2"):
-    species_complex_table = pd.read_table(datasets[species_id], na_values=["-"])
-    processed_complex_table = process_species_complextab(species_complex_table)
-
-    processed_complex_table["found_in_taxon"] = [
-        get_wikidata_item_by_propertyvalue("P685", int(taxid))
-        for taxid in processed_complex_table["Taxonomy identifier"].to_list()
-    ]
-
-    processed_complex_table["has_part"] = [
-        get_wikidata_item_by_propertyvalue("P352", uniprot_id)
-        for uniprot_id in processed_complex_table["uniprot_id"].to_list()
-    ]
-    return processed_complex_table
-
 def split_complexes(species_dataframe):
     complex_dfs = [
     species_dataframe[species_dataframe["#Complex ac"] == unique_complex].reset_index()
     for unique_complex in species_dataframe["#Complex ac"].unique()
     ]
     return(complex_dfs)   
-
 
 def prepare_refs():
     stated_in = wdi_core.WDItemID(value="Q47196990", prop_nr="P248", is_reference=True)
