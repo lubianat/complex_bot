@@ -234,7 +234,6 @@ def update_complex(protein_complex, references):
 
     go_reference = pd.read_csv("./reference_go_terms.csv")
     for go_term in protein_complex.go_ids:
-        print(go_term)
         # Considers  that each term has only one GO type
         obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
         prop =   go_reference[go_reference["id"] == go_term]["go_props"].values[0]
@@ -245,8 +244,9 @@ def update_complex(protein_complex, references):
     
     data.extend(go_statements)
 
-    # wd_item = wdi_core.WDItemEngine(data=data)
-    # wd_item.write(login_instance)
+    if protein_complex.complex_id == "CPX-5742":
+        wd_item = wdi_core.WDItemEngine(data=data)
+        wd_item.write(login_instance)
 
 
 def split_complexes(species_dataframe):
