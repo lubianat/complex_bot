@@ -52,7 +52,7 @@ def get_wikidata_item_by_propertyvalue(property, value):
     return qid
 
 
-def get_complex_portal_datasets():
+def get_complex_portal_dataset_urls():
     """Gets a dictionary of Complex portal datasets
     Returns a dictionary of species as keys and dataset url as values.
     """
@@ -127,16 +127,18 @@ def process_species_complextab(complextab_dataframe):
         complextab_dataframe (DataFrame): one of the species datasets,
 
     """
-    species_missing_raw = return_missing_from_wikidata(complextab_dataframe)
+    species_table_raw = return_missing_from_wikidata(complextab_dataframe)
 
     # Cleaning molecules column, they follow this format: 
     # uniprot_id(quantity)|another_uniprot_id(n)...
     molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
-    species_missing = separate_columns(species_missing_raw, molecules_column)
+    species_table = separate_molecules_column(species_table_raw, molecules_column)
 
-    return species_missing
+    go_column = "Go Annotations"
+    print(species_table_raw.head(2))
+    return species_table
 
-def separate_columns(species_missing_raw, molecules_column):
+def separate_molecules_column(species_missing_raw, molecules_column):
     species_missing_raw[molecules_column] = species_missing_raw[
         molecules_column
     ].str.split("|")

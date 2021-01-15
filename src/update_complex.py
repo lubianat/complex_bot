@@ -8,11 +8,11 @@ import utils
 from login import WDUSER, WDPASS
 
 # Make a dataframe for  all complexes of a species
-datasets = utils.get_complex_portal_datasets()
+dataset_urls = utils.get_complex_portal_dataset_urls()
 
 # Make a dataframe for with all complexes of a given species
 # 2697049 is SARS-CoV-2
-species_dataframe = utils.prepare_species_dataframe(datasets, species_id="2697049")
+species_dataframe = utils.prepare_species_dataframe(dataset_urls, species_id="2697049")
 
 # Split in a list of unique complexes
 complex_dfs = utils.split_complexes(species_dataframe)
