@@ -2,11 +2,13 @@
 # Copyright (c) 2020, jvfe
 # https://github.com/jvfe/wdt_contribs/tree/master/complex_portal/src
 
-from wikidataintegrator import wdi_login
-import pandas as pd
 import logging
+
+import pandas as pd
+from wikidataintegrator import wdi_login
+
 import utils
-from login import WDUSER, WDPASS
+from login import WDPASS, WDUSER
 
 # Make a dataframe for  all complexes of a species
 dataset_urls = utils.get_complex_portal_dataset_urls()
