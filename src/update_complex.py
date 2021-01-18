@@ -4,6 +4,7 @@
 
 from wikidataintegrator import wdi_login
 import pandas as pd
+import logging
 import utils
 from login import WDUSER, WDPASS
 
@@ -21,5 +22,5 @@ login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 references = utils.prepare_refs(species_id="2697049")
 
 for protein_complex in list_of_complexes:
-    print(protein_complex.complex_id)
+    logging.info(protein_complex.complex_id)
     utils.update_complex(login_instance, protein_complex, references)

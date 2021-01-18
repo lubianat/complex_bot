@@ -11,6 +11,13 @@ from ftplib import FTP
 import pandas as pd
 import re
 import math
+import logging
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    encoding='utf-8',
+    level=logging.INFO,
+)
 
 class ComplexComponent():
     def __init__(self,uniprot_id,quantity):
@@ -37,7 +44,7 @@ class Complex():
         molecules_string = self.info[molecules_column].values[0]
         molecules = molecules_string.split("|")
 
-        print(molecules)
+        logging.info(molecules)
 
         matches = [re.search('\((.*)\)', i) for i in molecules]
         quantities = [m.group(1) for m in matches]
@@ -56,8 +63,8 @@ class Complex():
             go_string = self.info[go_column].values[0]
             go_list = re.findall(pattern="GO:[0-9]*", string=go_string)
             self.go_ids = go_list
-        except:
-            print(f"No GOs for {self.complex_id}")
+        except Exception:
+            logging.warning(f"No GOs for {self.complex_id}")
 
     def get_wikidata_ids(self):
         
@@ -105,7 +112,7 @@ def get_list_of_complexes(datasets, species_id):
 def get_wikidata_complexes():
     """Gets all Wikidata items with a Complex Portal ID property"""
 
-    print("======  Getting complexes on Wikidata  ======")
+    logging.info("======  Getting complexes on Wikidata  ======")
 
 
     get_macromolecular = """
@@ -134,7 +141,7 @@ def get_wikidata_item_by_propertyvalue(property, value):
     try:
         match = query_result["results"]["bindings"][0]
     except IndexError:
-        print(f"Couldn't find item for {value}")
+        logging.error(f"Couldn't find item for {value}")
         return pd.np.NaN
     qid = match["item"]["value"]
 
@@ -149,7 +156,7 @@ def get_complex_portal_dataset_urls():
     domain = "ftp.ebi.ac.uk"
     complex_data = "pub/databases/intact/complex/current/complextab/"
 
-    print("======  Getting Complex Portal datasets via FTP  ======")
+    logging.info("======  Getting Complex Portal datasets via FTP  ======")
 
     ftp = FTP(domain)
     ftp.login()
@@ -166,7 +173,7 @@ def get_complex_portal_dataset_urls():
             current_key = reduce(
                 lambda a, kv: a.replace(*kv), string_replacements, species
             )
-            print(f"===== Getting {current_key} ====== ")
+            logging.info(f"===== Getting {current_key} ====== ")
             cp_datasets[current_key] = f"ftp://{domain}/{complex_data}{species}"
 
     return cp_datasets
@@ -177,7 +184,7 @@ def return_missing_from_wikidata(complexp_dataframe):
     Return complex portal entities that don't have Wikidata links.
     """
 
-    print("======  Checking which complexes are not on Wikidata  ======")
+    logging.info("======  Checking which complexes are not on Wikidata  ======")
 
 
     wikidata_complexes = get_wikidata_complexes()
@@ -232,7 +239,7 @@ def update_complex(login_instance, protein_complex, references):
 
         quantity = component.quantity
         component_qid = component.qid
-        print(component_qid)
+        logging.info(component_qid)
 
         def isNaN(string):
             return string != string
@@ -241,7 +248,7 @@ def update_complex(login_instance, protein_complex, references):
             break
             
         if quantity != "0" and not math.isnan(int(quantity)):
-            print(quantity)
+            logging.info(quantity)
         # Quantity is valid. 0 represents unknown in Complex Portal.
 
             quantity_qualifier = wdi_core.WDQuantity(
