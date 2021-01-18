@@ -2,10 +2,13 @@
 # Copyright (c) 2020, jvfe
 # https://github.com/jvfe/wdt_contribs/tree/master/complex_portal/src
 
-from wikidataintegrator import wdi_login
+import logging
+
 import pandas as pd
+from wikidataintegrator import wdi_login
+
 import utils
-from login import WDUSER, WDPASS
+from login import WDPASS, WDUSER
 
 # Make a dataframe for  all complexes of a species
 dataset_urls = utils.get_complex_portal_dataset_urls()
@@ -21,5 +24,5 @@ login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 references = utils.prepare_refs(species_id="2697049")
 
 for protein_complex in list_of_complexes:
-    print(protein_complex.complex_id)
+    logging.info(protein_complex.complex_id)
     utils.update_complex(login_instance, protein_complex, references)
