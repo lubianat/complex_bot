@@ -101,15 +101,15 @@ def update_complex(login_instance, protein_complex, references):
             "de":"makromolekularer Komplex"
     }
 
-    if protein_complex.complex_id == "CPX-5742":
+    
 
-        wd_item = wdi_core.WDItemEngine(data=data)
-        wd_item.set_label(label=label, lang="en")
-        wd_item.set_aliases(aliases, lang='en')
-        for lang, description in descriptions.items():
-            wd_item.set_description(description, lang=lang)
+    wd_item = wdi_core.WDItemEngine(data=data)
+    wd_item.set_label(label=label, lang="en")
+    wd_item.set_aliases(aliases, lang='en')
+    for lang, description in descriptions.items():
+        wd_item.set_description(description, lang=lang)
 
-        wd_item.write(login_instance)
+    wd_item.write(login_instance)
 
 
 
@@ -227,7 +227,7 @@ def get_list_of_complexes(datasets, species_id):
     """
     table_of_complexes_raw = pd.read_table(datasets[species_id], na_values=["-"])
 
-    # table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
+    table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
     keep = [
         "#Complex ac",
         "Recommended name",
@@ -312,7 +312,6 @@ def get_complex_portal_dataset_urls():
             current_key = reduce(
                 lambda a, kv: a.replace(*kv), string_replacements, species
             )
-            logging.info(f"===== Getting {current_key} ====== ")
             cp_datasets[current_key] = f"ftp://{domain}/{complex_data}{species}"
 
     return cp_datasets
