@@ -25,6 +25,7 @@ def update_complex(login_instance, protein_complex, references):
     Args:
         complex_dataframe (DataFrame): information about a complex properly formatted.
     """
+
     instance_of = wdi_core.WDItemID(
         value="Q22325163", prop_nr="P31", references=references
     )
@@ -87,8 +88,27 @@ def update_complex(login_instance, protein_complex, references):
 
     data.extend(go_statements)
 
+
+
+    
+    label = protein_complex.name
+    aliases = protein_complex.aliases
+    descriptions = {
+            "en": "macromolecular complex",
+            "pt": "complexo macromolecular",
+            "pt-br": "complexo macromolecular",
+            "nl": "macromoleculair complex",
+            "de":"makromolekularer Komplex"
+    }
+
     if protein_complex.complex_id == "CPX-5742":
+
         wd_item = wdi_core.WDItemEngine(data=data)
+        wd_item.set_label(label=label, lang="en")
+        wd_item.set_aliases(aliases, lang='en')
+        for lang, description in descriptions.items():
+            wd_item.set_description(description, lang=lang)
+
         wd_item.write(login_instance)
 
 
@@ -108,12 +128,53 @@ class ComplexComponent:
 class Complex:
     def __init__(self, dataset, complex_id):
         self.complex_id = complex_id
+
+        # Info is a 1 row data frame with the following columns: 
+        # #Complex ac	
+        # Recommended name	
+        # Aliases for complex	
+        # Taxonomy identifier	
+        # Identifiers (and stoichiometry) of molecules in complex	
+        # Confidence	
+        # Experimental evidence	
+        # Go Annotations	
+        # Cross references	
+        # Description	
+        # Complex properties	
+        # Complex assembly	
+        # Ligand	
+        # Disease	
+        # Agonist	
+        # Antagonist	
+        # Comment	
+        # Source	
+        # Expanded participant list
+
         self.info = dataset[dataset["#Complex ac"] == complex_id]
+        print(self.info)
         self.list_of_components = []
         self.go_ids = []
+        self.extract_fields()
+        
+    def extract_fields(self):
+        self.get_name()
+        self.get_aliases()
         self.get_components()
         self.get_go_ids()
         self.get_wikidata_ids()
+
+    def get_name(self):
+        self.name = self.info["Recommended name"].values[0]
+    
+    def get_aliases(self):
+        aliases_string = self.info["Aliases for complex"].values[0]
+        
+        # "-" represents NA in this column
+        # Sometimes we get true NAs there
+        if aliases_string == "-" or not isinstance(aliases_string, str) :
+            self.aliases = []
+        else:
+            self.aliases = aliases_string.split("|")
 
     def get_components(self):
         molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
