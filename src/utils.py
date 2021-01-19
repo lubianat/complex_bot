@@ -16,9 +16,82 @@ from wikidataintegrator.wdi_core import WDItemEngine
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    encoding="utf-8",
     level=logging.INFO,
 )
+
+
+def update_complex(login_instance, protein_complex, references):
+    """
+    Args:
+        complex_dataframe (DataFrame): information about a complex properly formatted.
+    """
+    instance_of = wdi_core.WDItemID(
+        value="Q22325163", prop_nr="P31", references=references
+    )
+
+    found_in_taxon = wdi_core.WDItemID(
+        value=protein_complex.taxon_qid, prop_nr="P703", references=references
+    )
+
+    complex_portal_id = wdi_core.WDString(
+        value=protein_complex.complex_id, prop_nr="P7718", references=references
+    )
+
+    data = [instance_of, found_in_taxon, complex_portal_id]
+
+    has_parts = []
+    for component in protein_complex.list_of_components:
+
+        quantity = component.quantity
+        component_qid = component.qid
+        logging.info(component_qid)
+
+        def isNaN(string):
+            return string != string
+
+        if isNaN(component_qid):
+            break
+
+        if quantity != "0" and not math.isnan(int(quantity)):
+            logging.info(quantity)
+            # Quantity is valid. 0 represents unknown in Complex Portal.
+
+            quantity_qualifier = wdi_core.WDQuantity(
+                value=int(quantity), prop_nr="P1114", is_qualifier=True
+            )
+            statement = wdi_core.WDItemID(
+                value=component_qid,
+                prop_nr="P527",
+                qualifiers=[quantity_qualifier],
+                references=references,
+            )
+        else:
+            statement = wdi_core.WDItemID(
+                value=component_qid, prop_nr="P527", references=references
+            )
+
+        has_parts.append(statement)
+
+    data.extend(has_parts)
+
+    # Reference table via https://w.wiki/uW2
+    go_statements = []
+
+    go_reference = pd.read_csv("./reference_go_terms.csv")
+    for go_term in protein_complex.go_ids:
+        # Considers  that each term has only one GO type
+        obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
+        prop = go_reference[go_reference["id"] == go_term]["go_props"].values[0]
+        statement = wdi_core.WDItemID(value=obj, prop_nr=prop, references=references)
+        go_statements.append(statement)
+
+    data.extend(go_statements)
+
+    if protein_complex.complex_id == "CPX-5742":
+        wd_item = wdi_core.WDItemEngine(data=data)
+        wd_item.write(login_instance)
+
+
 
 
 class ComplexComponent:
@@ -217,78 +290,6 @@ def return_missing_from_wikidata(complexp_dataframe):
     missing_from_wikidata = missing_from_wikidata[keep]
 
     return missing_from_wikidata
-
-
-def update_complex(login_instance, protein_complex, references):
-    """
-    Args:
-        complex_dataframe (DataFrame): information about a complex properly formatted.
-    """
-    instance_of = wdi_core.WDItemID(
-        value="Q22325163", prop_nr="P31", references=references
-    )
-
-    found_in_taxon = wdi_core.WDItemID(
-        value=protein_complex.taxon_qid, prop_nr="P703", references=references
-    )
-
-    complex_portal_id = wdi_core.WDString(
-        value=protein_complex.complex_id, prop_nr="P7718", references=references
-    )
-
-    data = [instance_of, found_in_taxon, complex_portal_id]
-
-    has_parts = []
-    for component in protein_complex.list_of_components:
-
-        quantity = component.quantity
-        component_qid = component.qid
-        logging.info(component_qid)
-
-        def isNaN(string):
-            return string != string
-
-        if isNaN(component_qid):
-            break
-
-        if quantity != "0" and not math.isnan(int(quantity)):
-            logging.info(quantity)
-            # Quantity is valid. 0 represents unknown in Complex Portal.
-
-            quantity_qualifier = wdi_core.WDQuantity(
-                value=int(quantity), prop_nr="P1114", is_qualifier=True
-            )
-            statement = wdi_core.WDItemID(
-                value=component_qid,
-                prop_nr="P527",
-                qualifiers=[quantity_qualifier],
-                references=references,
-            )
-        else:
-            statement = wdi_core.WDItemID(
-                value=component_qid, prop_nr="P527", references=references
-            )
-
-        has_parts.append(statement)
-
-    data.extend(has_parts)
-
-    # Reference table via https://w.wiki/uW2
-    go_statements = []
-
-    go_reference = pd.read_csv("./reference_go_terms.csv")
-    for go_term in protein_complex.go_ids:
-        # Considers  that each term has only one GO type
-        obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
-        prop = go_reference[go_reference["id"] == go_term]["go_props"].values[0]
-        statement = wdi_core.WDItemID(value=obj, prop_nr=prop, references=references)
-        go_statements.append(statement)
-
-    data.extend(go_statements)
-
-    if protein_complex.complex_id == "CPX-5742":
-        wd_item = wdi_core.WDItemEngine(data=data)
-        wd_item.write(login_instance)
 
 
 def split_complexes(species_dataframe):
