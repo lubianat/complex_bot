@@ -212,13 +212,16 @@ class Complex:
         self.taxon_qid = get_wikidata_item_by_propertyvalue("P685", int(tax_id))
 
 
-def get_list_of_complexes(datasets, species_id):
+def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
     """Clean and process table of complexes
 
     Parses table of complexes into Complex classes
 
     Args:
-        complextab_dataframe (DataFrame): one of the species datasets
+        datasets (DataFrame): one of the species datasets
+        species_id: The NCBI species ID
+        def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
+: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True. 
 
     Returns
         list_of_complexes (list): Objects of the Complex class
@@ -227,7 +230,8 @@ def get_list_of_complexes(datasets, species_id):
     """
     table_of_complexes_raw = pd.read_table(datasets[species_id], na_values=["-"])
 
-    table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
+    if test_on_wikidata:
+        table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
     keep = [
         "#Complex ac",
         "Recommended name",
