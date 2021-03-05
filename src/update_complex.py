@@ -17,6 +17,7 @@ def main():
 
     parser.add_argument('--species', '-s', help="a species id", type= str)
     parser.add_argument('--wikidata', '-w', help="1 to exclude complexes on Wikidata, 0 to include", type= int, default= 1)
+    
     args = parser.parse_args()
 
     if len(sys. argv) < 4:
@@ -34,13 +35,19 @@ def main():
 
     login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 
+
+    # Counter for bot test
+    counter = 0
     # Update Wikidata
     references = utils.prepare_refs(species_id=id)
 
+    print("===== Updating complexes on Wikidata =====")
     for protein_complex in list_of_complexes:
-        logging.info(protein_complex.complex_id)
+        counter = counter + 1
+        print(protein_complex.complex_id)
         utils.update_complex(login_instance, protein_complex, references)
-
+        if counter == 2:
+            break
 
 if __name__ == "__main__":
     main()

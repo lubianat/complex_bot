@@ -2,22 +2,56 @@
 # Copyright (c) 2020, jvfe
 # https://github.com/jvfe/wdt_contribs/tree/master/complex_portal/src
 
-import logging
 import math
 import re
 from collections import defaultdict
 from ftplib import FTP
 from functools import lru_cache, reduce
 from time import gmtime, strftime
-
 import pandas as pd
 from wikidataintegrator import wdi_core
 from wikidataintegrator.wdi_core import WDItemEngine
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
+
+def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
+    """Clean and process table of complexes
+
+    Parses table of complexes into Complex classes
+
+    Args:
+        datasets (DataFrame): one of the species datasets
+        species_id: The NCBI species ID
+        def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
+    test_on_wikidata: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True. 
+
+    Returns
+        list_of_complexes (list): Objects of the Complex class
+
+
+    """
+    table_of_complexes_raw = pd.read_table(datasets[species_id], na_values=["-"])
+
+    if test_on_wikidata:
+        table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
+    keep = [
+        "#Complex ac",
+        "Recommended name",
+        "Aliases for complex",
+        "Taxonomy identifier",
+        "Go Annotations",
+        "Identifiers (and stoichiometry) of molecules in complex",
+        "Description",
+    ]
+
+    table_of_complexes_raw = table_of_complexes_raw[keep]
+
+    list_of_complexes = []
+
+    print("====== Parsing list to extract into class Complex ======")
+    for complex_id in table_of_complexes_raw["#Complex ac"]:
+        list_of_complexes.append(Complex(table_of_complexes_raw, complex_id))
+
+    return list_of_complexes
 
 
 def update_complex(login_instance, protein_complex, references):
@@ -45,7 +79,7 @@ def update_complex(login_instance, protein_complex, references):
 
         quantity = component.quantity
         component_qid = component.qid
-        logging.info(component_qid)
+        print(f"Component QID: {component_qid}")
 
         def isNaN(string):
             return string != string
@@ -54,7 +88,7 @@ def update_complex(login_instance, protein_complex, references):
             break
 
         if quantity != "0" and not math.isnan(int(quantity)):
-            logging.info(quantity)
+            print(f"Quantity of this component: {str(quantity)}")
             # Quantity is valid. 0 represents unknown in Complex Portal.
 
             quantity_qualifier = wdi_core.WDQuantity(
@@ -112,8 +146,6 @@ def update_complex(login_instance, protein_complex, references):
     wd_item.write(login_instance)
 
 
-
-
 class ComplexComponent:
     def __init__(self, uniprot_id, quantity):
         self.uniprot_id = uniprot_id
@@ -151,6 +183,7 @@ class Complex:
         # Expanded participant list
 
         self.info = dataset[dataset["#Complex ac"] == complex_id]
+        print("====== Row for this complex =======")
         print(self.info)
         self.list_of_components = []
         self.go_ids = []
@@ -180,8 +213,8 @@ class Complex:
         molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
         molecules_string = self.info[molecules_column].values[0]
         molecules = molecules_string.split("|")
-
-        logging.info(molecules)
+        print("====== Parts of this complex =======")
+        print(molecules)
 
         matches = [re.search("\((.*)\)", i) for i in molecules]
         quantities = [m.group(1) for m in matches]
@@ -203,7 +236,7 @@ class Complex:
             go_list = re.findall(pattern="GO:[0-9]*", string=go_string)
             self.go_ids = go_list
         except Exception:
-            logging.warning(f"No GOs for {self.complex_id}")
+            print(f"No GOs for {self.complex_id}")
 
     def get_wikidata_ids(self):
 
@@ -212,50 +245,11 @@ class Complex:
         self.taxon_qid = get_wikidata_item_by_propertyvalue("P685", int(tax_id))
 
 
-def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
-    """Clean and process table of complexes
-
-    Parses table of complexes into Complex classes
-
-    Args:
-        datasets (DataFrame): one of the species datasets
-        species_id: The NCBI species ID
-        def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
-: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True. 
-
-    Returns
-        list_of_complexes (list): Objects of the Complex class
-
-
-    """
-    table_of_complexes_raw = pd.read_table(datasets[species_id], na_values=["-"])
-
-    if test_on_wikidata:
-        table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
-    keep = [
-        "#Complex ac",
-        "Recommended name",
-        "Aliases for complex",
-        "Taxonomy identifier",
-        "Go Annotations",
-        "Identifiers (and stoichiometry) of molecules in complex",
-        "Description",
-    ]
-
-    table_of_complexes_raw = table_of_complexes_raw[keep]
-
-    list_of_complexes = []
-
-    for complex_id in table_of_complexes_raw["#Complex ac"]:
-        list_of_complexes.append(Complex(table_of_complexes_raw, complex_id))
-
-    return list_of_complexes
-
 
 def get_wikidata_complexes():
     """Gets all Wikidata items with a Complex Portal ID property"""
 
-    logging.info("======  Getting complexes on Wikidata  ======")
+    print("======  Getting complexes on Wikidata  ======")
 
     get_macromolecular = """
     SELECT ?item ?ComplexPortalID
@@ -268,7 +262,6 @@ def get_wikidata_complexes():
     ).replace({"http://www.wikidata.org/entity/": ""}, regex=True)
 
     return wikidata_complexes
-
 
 @lru_cache(maxsize=None)
 def get_wikidata_item_by_propertyvalue(property, value):
@@ -284,7 +277,9 @@ def get_wikidata_item_by_propertyvalue(property, value):
     try:
         match = query_result["results"]["bindings"][0]
     except IndexError:
-        logging.error(f"Couldn't find item for {value}")
+        print(f"Couldn't find item for {value}")
+        with open("errors/log.txt", "w") as f:
+            f.write(f"Couldn't find item for {value}")
         return pd.np.NaN
     qid = match["item"]["value"]
 
@@ -299,7 +294,7 @@ def get_complex_portal_dataset_urls():
     domain = "ftp.ebi.ac.uk"
     complex_data = "pub/databases/intact/complex/current/complextab/"
 
-    logging.info("======  Getting Complex Portal datasets via FTP  ======")
+    print("======  Getting Complex Portal datasets via FTP  ======")
 
     ftp = FTP(domain)
     ftp.login()
@@ -326,7 +321,7 @@ def return_missing_from_wikidata(complexp_dataframe):
     Return complex portal entities that don't have Wikidata links.
     """
 
-    logging.info("======  Checking which complexes are not on Wikidata  ======")
+    print("======  Checking which complexes are not on Wikidata  ======")
 
     wikidata_complexes = get_wikidata_complexes()
 
