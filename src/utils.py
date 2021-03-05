@@ -14,7 +14,8 @@ from wikidataintegrator.wdi_core import WDItemEngine
 
 
 def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
-    """Clean and process table of complexes
+    """
+    Clean and process table of complexes
 
     Parses table of complexes into Complex classes
 
@@ -27,12 +28,30 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
     Returns
         list_of_complexes (list): Objects of the Complex class
 
-
     """
-    table_of_complexes_raw = pd.read_table(datasets[species_id], na_values=["-"])
+    raw_table = pd.read_table(datasets[species_id], na_values=["-"])
 
-    if test_on_wikidata:
-        table_of_complexes_raw = return_missing_from_wikidata(table_of_complexes_raw)
+    if test_on_wikidata == True:
+        raw_table = remove_rows_on_wikidata(raw_table)
+    
+    cols_to_keep = get_cols_to_keep()
+
+    raw_table = raw_table[cols_to_keep]
+
+    list_of_complexes = []
+
+    print("====== Parsing list to extract into class Complex ======")
+        # Counter for bot test
+    counter = 0
+    for complex_id in raw_table["#Complex ac"]:
+        counter = counter + 1
+        list_of_complexes.append(Complex(raw_table, complex_id))
+        if counter == 10:
+            break
+    return list_of_complexes
+
+
+def get_cols_to_keep():
     keep = [
         "#Complex ac",
         "Recommended name",
@@ -42,17 +61,7 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
         "Identifiers (and stoichiometry) of molecules in complex",
         "Description",
     ]
-
-    table_of_complexes_raw = table_of_complexes_raw[keep]
-
-    list_of_complexes = []
-
-    print("====== Parsing list to extract into class Complex ======")
-    for complex_id in table_of_complexes_raw["#Complex ac"]:
-        list_of_complexes.append(Complex(table_of_complexes_raw, complex_id))
-
-    return list_of_complexes
-
+    return(keep)
 
 def update_complex(login_instance, protein_complex, references):
     """
@@ -183,11 +192,10 @@ class Complex:
         # Expanded participant list
 
         self.info = dataset[dataset["#Complex ac"] == complex_id]
-        print("====== Row for this complex =======")
-        print(self.info)
         self.list_of_components = []
         self.go_ids = []
         self.extract_fields()
+        print(f"Parsing {self.name}")
         
     def extract_fields(self):
         self.get_name()
@@ -213,9 +221,6 @@ class Complex:
         molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
         molecules_string = self.info[molecules_column].values[0]
         molecules = molecules_string.split("|")
-        print("====== Parts of this complex =======")
-        print(molecules)
-
         matches = [re.search("\((.*)\)", i) for i in molecules]
         quantities = [m.group(1) for m in matches]
 
@@ -316,7 +321,7 @@ def get_complex_portal_dataset_urls():
     return cp_datasets
 
 
-def return_missing_from_wikidata(complexp_dataframe):
+def remove_rows_on_wikidata(complexp_dataframe):
     """
     Return complex portal entities that don't have Wikidata links.
     """

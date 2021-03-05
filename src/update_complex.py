@@ -36,18 +36,13 @@ def main():
     login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 
 
-    # Counter for bot test
-    counter = 0
     # Update Wikidata
     references = utils.prepare_refs(species_id=id)
 
     print("===== Updating complexes on Wikidata =====")
     for protein_complex in list_of_complexes:
-        counter = counter + 1
         print(protein_complex.complex_id)
         utils.update_complex(login_instance, protein_complex, references)
-        if counter == 2:
-            break
 
 if __name__ == "__main__":
     main()
