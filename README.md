@@ -8,8 +8,12 @@ Data from http://ftp.ebi.ac.uk/pub/databases/intact/complex/current/complextab/.
 
 Usage: python3 update_complex.py -s [species id] -w [boolean]
 
-arser.add_argument('--species', '-s', help="a species id", type= str)
-parser.add_argument('--wikidata', '-w', help="1 to exclude complexes on Wikidata, 0 to include", type= int, default= 1)
+Arguments:
+
+    --species/-s : a species NCBI ID
+    --wikidata/-w : 1 to add new complex to Wikidata, 0 to also update the existing ones.
+
+Currently, errors are added to the errors/log folder.
 # Main contributors
 
 * Tiago Lubiana (@lubianat)

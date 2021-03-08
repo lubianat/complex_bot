@@ -35,11 +35,9 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
         raw_table = remove_rows_on_wikidata(raw_table)
     
     cols_to_keep = get_cols_to_keep()
-
     raw_table = raw_table[cols_to_keep]
 
     list_of_complexes = []
-
     print("====== Parsing list to extract into class Complex ======")
         # Counter for bot test
     counter = 0
@@ -129,11 +127,7 @@ def update_complex(login_instance, protein_complex, references):
         statement = wdi_core.WDItemID(value=obj, prop_nr=prop, references=references)
         go_statements.append(statement)
 
-    data.extend(go_statements)
-
-
-
-    
+    data.extend(go_statements)  
     label = protein_complex.name
     aliases = protein_complex.aliases
     descriptions = {
