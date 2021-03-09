@@ -280,7 +280,7 @@ def get_wikidata_item_by_propertyvalue(property, value):
         match = query_result["results"]["bindings"][0]
     except IndexError:
         print(f"Couldn't find item for {value}")
-        with open("errors/log.txt", "w") as f:
+        with open("errors/log.txt", "a") as f:
             f.write(f"Couldn't find item for {value}")
         return pd.np.NaN
     qid = match["item"]["value"]
