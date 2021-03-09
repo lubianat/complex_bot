@@ -23,7 +23,7 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
         datasets (DataFrame): one of the species datasets
         species_id: The NCBI species ID
         def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
-    test_on_wikidata: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True. 
+    test_on_wikidata: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True.
 
     Returns
         list_of_complexes (list): Objects of the Complex class
@@ -31,15 +31,15 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
     """
     raw_table = pd.read_table(datasets[species_id], na_values=["-"])
 
-    if test_on_wikidata == True:
+    if test_on_wikidata:
         raw_table = remove_rows_on_wikidata(raw_table)
-    
+
     cols_to_keep = get_cols_to_keep()
     raw_table = raw_table[cols_to_keep]
 
     list_of_complexes = []
     print("====== Parsing list to extract into class Complex ======")
-        # Counter for bot test
+    # Counter for bot test
     counter = 0
     for complex_id in raw_table["#Complex ac"]:
         counter = counter + 1
@@ -61,6 +61,7 @@ def get_cols_to_keep():
     ]
     return(keep)
 
+
 def update_complex(login_instance, protein_complex, references):
     """
     Args:
@@ -76,8 +77,9 @@ def update_complex(login_instance, protein_complex, references):
     )
 
     complex_portal_id = wdi_core.WDString(
-        value=protein_complex.complex_id, prop_nr="P7718", references=references
-    )
+        value=protein_complex.complex_id,
+        prop_nr="P7718",
+        references=references)
 
     data = [instance_of, found_in_taxon, complex_portal_id]
 
@@ -123,22 +125,22 @@ def update_complex(login_instance, protein_complex, references):
     for go_term in protein_complex.go_ids:
         # Considers  that each term has only one GO type
         obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
-        prop = go_reference[go_reference["id"] == go_term]["go_props"].values[0]
-        statement = wdi_core.WDItemID(value=obj, prop_nr=prop, references=references)
+        prop = go_reference[go_reference["id"]
+                            == go_term]["go_props"].values[0]
+        statement = wdi_core.WDItemID(
+            value=obj, prop_nr=prop, references=references)
         go_statements.append(statement)
 
-    data.extend(go_statements)  
+    data.extend(go_statements)
     label = protein_complex.name
     aliases = protein_complex.aliases
     descriptions = {
-            "en": "macromolecular complex",
-            "pt": "complexo macromolecular",
-            "pt-br": "complexo macromolecular",
-            "nl": "macromoleculair complex",
-            "de":"makromolekularer Komplex"
+        "en": "macromolecular complex",
+        "pt": "complexo macromolecular",
+        "pt-br": "complexo macromolecular",
+        "nl": "macromoleculair complex",
+        "de": "makromolekularer Komplex"
     }
-
-    
 
     wd_item = wdi_core.WDItemEngine(data=data)
     wd_item.set_label(label=label, lang="en")
@@ -164,25 +166,25 @@ class Complex:
     def __init__(self, dataset, complex_id):
         self.complex_id = complex_id
 
-        # Info is a 1 row data frame with the following columns: 
-        # #Complex ac	
-        # Recommended name	
-        # Aliases for complex	
-        # Taxonomy identifier	
-        # Identifiers (and stoichiometry) of molecules in complex	
-        # Confidence	
-        # Experimental evidence	
-        # Go Annotations	
-        # Cross references	
-        # Description	
-        # Complex properties	
-        # Complex assembly	
-        # Ligand	
-        # Disease	
-        # Agonist	
-        # Antagonist	
-        # Comment	
-        # Source	
+        # Info is a 1 row data frame with the following columns:
+        # #Complex ac
+        # Recommended name
+        # Aliases for complex
+        # Taxonomy identifier
+        # Identifiers (and stoichiometry) of molecules in complex
+        # Confidence
+        # Experimental evidence
+        # Go Annotations
+        # Cross references
+        # Description
+        # Complex properties
+        # Complex assembly
+        # Ligand
+        # Disease
+        # Agonist
+        # Antagonist
+        # Comment
+        # Source
         # Expanded participant list
 
         self.info = dataset[dataset["#Complex ac"] == complex_id]
@@ -190,7 +192,7 @@ class Complex:
         self.go_ids = []
         self.extract_fields()
         print(f"Parsing {self.name}")
-        
+
     def extract_fields(self):
         self.get_name()
         self.get_aliases()
@@ -200,13 +202,13 @@ class Complex:
 
     def get_name(self):
         self.name = self.info["Recommended name"].values[0]
-    
+
     def get_aliases(self):
         aliases_string = self.info["Aliases for complex"].values[0]
-        
+
         # "-" represents NA in this column
         # Sometimes we get true NAs there
-        if aliases_string == "-" or not isinstance(aliases_string, str) :
+        if aliases_string == "-" or not isinstance(aliases_string, str):
             self.aliases = []
         else:
             self.aliases = aliases_string.split("|")
@@ -215,10 +217,10 @@ class Complex:
         molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
         molecules_string = self.info[molecules_column].values[0]
         molecules = molecules_string.split("|")
-        matches = [re.search("\((.*)\)", i) for i in molecules]
+        matches = [re.search(r"\((.*)\)", i) for i in molecules]
         quantities = [m.group(1) for m in matches]
 
-        matches = [re.search("(.*)\(.*\)", i) for i in molecules]
+        matches = [re.search(r"(.*)\(.*\)", i) for i in molecules]
         uniprot_ids = [m.group(1) for m in matches]
 
         component_and_quantities = dict(zip(uniprot_ids, quantities))
@@ -241,8 +243,8 @@ class Complex:
 
         # NCBI taxonomy ID (P685)
         tax_id = self.info["Taxonomy identifier"].values[0]
-        self.taxon_qid = get_wikidata_item_by_propertyvalue("P685", int(tax_id))
-
+        self.taxon_qid = get_wikidata_item_by_propertyvalue(
+            "P685", int(tax_id))
 
 
 def get_wikidata_complexes():
@@ -252,7 +254,7 @@ def get_wikidata_complexes():
 
     get_macromolecular = """
     SELECT ?item ?ComplexPortalID
-    WHERE 
+    WHERE
     {
     ?item wdt:P7718 ?ComplexPortalID .
     }"""
@@ -261,6 +263,7 @@ def get_wikidata_complexes():
     ).replace({"http://www.wikidata.org/entity/": ""}, regex=True)
 
     return wikidata_complexes
+
 
 @lru_cache(maxsize=None)
 def get_wikidata_item_by_propertyvalue(property, value):
@@ -361,9 +364,15 @@ def split_complexes(species_dataframe):
 
 
 def prepare_refs(species_id):
-    stated_in = wdi_core.WDItemID(value="Q47196990", prop_nr="P248", is_reference=True)
+    stated_in = wdi_core.WDItemID(
+        value="Q47196990",
+        prop_nr="P248",
+        is_reference=True)
     wikidata_time = strftime("+%Y-%m-%dT00:00:00Z", gmtime())
-    retrieved = wdi_core.WDTime(wikidata_time, prop_nr="P813", is_reference=True)
+    retrieved = wdi_core.WDTime(
+        wikidata_time,
+        prop_nr="P813",
+        is_reference=True)
 
     ftp_url = "ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/current/complextab"
     ref_url = wdi_core.WDString(ftp_url, prop_nr="P854", is_reference=True)
