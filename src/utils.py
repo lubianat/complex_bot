@@ -44,7 +44,7 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
     for complex_id in raw_table["#Complex ac"]:
         counter = counter + 1
         list_of_complexes.append(Complex(raw_table, complex_id))
-        if counter == 10:
+        if counter == 100:
             break
     return list_of_complexes
 
@@ -280,8 +280,8 @@ def get_wikidata_item_by_propertyvalue(property, value):
         match = query_result["results"]["bindings"][0]
     except IndexError:
         print(f"Couldn't find item for {value}")
-        with open("errors/log.txt", "a") as f:
-            f.write(f"Couldn't find item for {value}")
+        with open("errors/log.csv", "a") as f:
+            f.write(f"{value},'not found'\n")
         return pd.np.NaN
     qid = match["item"]["value"]
 
