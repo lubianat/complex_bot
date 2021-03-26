@@ -23,7 +23,7 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
         datasets (DataFrame): one of the species datasets
         species_id: The NCBI species ID
         def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
-    test_on_wikidata: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True.
+        test_on_wikidata: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True.
 
     Returns
         list_of_complexes (list): Objects of the Complex class
@@ -47,19 +47,6 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
         if counter == 100:
             break
     return list_of_complexes
-
-
-def get_cols_to_keep():
-    keep = [
-        "#Complex ac",
-        "Recommended name",
-        "Aliases for complex",
-        "Taxonomy identifier",
-        "Go Annotations",
-        "Identifiers (and stoichiometry) of molecules in complex",
-        "Description",
-    ]
-    return(keep)
 
 
 def update_complex(login_instance, protein_complex, references):
@@ -152,14 +139,15 @@ def update_complex(login_instance, protein_complex, references):
 
 
 class ComplexComponent:
-    def __init__(self, uniprot_id, quantity):
-        self.uniprot_id = uniprot_id
+    def __init__(self, external_id, quantity):
+        self.external_id = external_id
         self.quantity = quantity
         self.get_qid_for_component()
 
     def get_qid_for_component(self):
+        print(external_id)
         # UniProt protein ID (P352)
-        self.qid = get_wikidata_item_by_propertyvalue("P352", self.uniprot_id)
+        self.qid = get_wikidata_item_by_propertyvalue("P352", self.external_id)
 
 
 class Complex:
@@ -224,9 +212,9 @@ class Complex:
         uniprot_ids = [m.group(1) for m in matches]
 
         component_and_quantities = dict(zip(uniprot_ids, quantities))
-        for uniprot_id in component_and_quantities:
+        for external_id in component_and_quantities:
             component = ComplexComponent(
-                uniprot_id, component_and_quantities[uniprot_id]
+                external_id, component_and_quantities[external_id]
             )
             self.list_of_components.append(component)
 
@@ -384,3 +372,16 @@ def prepare_refs(species_id):
 
     references = [[stated_in, retrieved, ref_url, ref_filename]]
     return references
+
+def get_cols_to_keep():
+    keep = [
+        "#Complex ac",
+        "Recommended name",
+        "Aliases for complex",
+        "Taxonomy identifier",
+        "Go Annotations",
+        "Identifiers (and stoichiometry) of molecules in complex",
+        "Description",
+    ]
+    return(keep)
+
