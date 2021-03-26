@@ -150,7 +150,10 @@ class ComplexComponent:
         if "CHEBI" in self.external_id:
             external_id = external_id.replace("CHEBI:", "")
             # ChEBI ID (P683)
-            self.qid = get_wikidata_item_by_propertyvalue("P683", self.external_id)
+            self.qid = get_wikidata_item_by_propertyvalue("P683", external_id)
+        elif "CPX" in self.external_id:
+            # Complex Portal ID (P7718)
+            self.qid = get_wikidata_item_by_propertyvalue("P7718", self.external_id)
         else:
             # UniProt protein ID (P352)
             self.qid = get_wikidata_item_by_propertyvalue("P352", self.external_id)
