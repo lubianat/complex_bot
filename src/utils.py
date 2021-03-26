@@ -145,9 +145,15 @@ class ComplexComponent:
         self.get_qid_for_component()
 
     def get_qid_for_component(self):
+        external_id = self.external_id
         print(external_id)
-        # UniProt protein ID (P352)
-        self.qid = get_wikidata_item_by_propertyvalue("P352", self.external_id)
+        if "CHEBI" in self.external_id:
+            external_id = external_id.replace("CHEBI:", "")
+            # ChEBI ID (P683)
+            self.qid = get_wikidata_item_by_propertyvalue("P683", self.external_id)
+        else:
+            # UniProt protein ID (P352)
+            self.qid = get_wikidata_item_by_propertyvalue("P352", self.external_id)
 
 
 class Complex:
