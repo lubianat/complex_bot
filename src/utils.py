@@ -44,7 +44,7 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
     for complex_id in raw_table["#Complex ac"]:
         counter = counter + 1
         list_of_complexes.append(Complex(raw_table, complex_id))
-        if counter == 100:
+        if counter == 5:
             break
     return list_of_complexes
 
@@ -111,22 +111,27 @@ def update_complex(login_instance, protein_complex, references):
     go_reference = pd.read_csv("./reference_go_terms.csv")
     for go_term in protein_complex.go_ids:
         # Considers  that each term has only one GO type
-        obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
-        prop = go_reference[go_reference["id"]
-                            == go_term]["go_props"].values[0]
-        statement = wdi_core.WDItemID(
-            value=obj, prop_nr=prop, references=references)
-        go_statements.append(statement)
+        try:
+            obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
+            prop = go_reference[go_reference["id"]
+                                == go_term]["go_props"].values[0]
+            statement = wdi_core.WDItemID(
+                value=obj, prop_nr=prop, references=references)
+            go_statements.append(statement)
+        except:
+            print("Problem with " + go_term)
 
     data.extend(go_statements)
     label = protein_complex.name
     aliases = protein_complex.aliases
+
+    taxon_name = get_wikidata_label(protein_complex.taxon_qid)
     descriptions = {
-        "en": "macromolecular complex",
-        "pt": "complexo macromolecular",
-        "pt-br": "complexo macromolecular",
-        "nl": "macromoleculair complex",
-        "de": "makromolekularer Komplex"
+        "en": "macromolecular complex found in " + taxon_name,
+        "pt": "complexo macromolecular encontrado em " + taxon_name,
+        "pt-br": "complexo macromolecular encontrado em " + taxon_name,
+        "nl": "macromoleculair complex gevonden in " + taxon_name,
+        "de": "makromolekularer Komplex auffindbar in " + taxon_name
     }
 
     wd_item = wdi_core.WDItemEngine(data=data)
@@ -260,6 +265,27 @@ def get_wikidata_complexes():
     ).replace({"http://www.wikidata.org/entity/": ""}, regex=True)
 
     return wikidata_complexes
+
+
+def get_wikidata_label(qid, langcode="en"):
+    """Gets a Wikidata item for a determined property-value pair
+    Args:
+        qid (str): The qid to get the label
+        langcode (str): The language code of the label
+    """
+
+    query_result = WDItemEngine.execute_sparql_query(
+        f'SELECT ?label WHERE {{ wd:{qid} rdfs:label ?label. FILTER(LANG(?label)="{langcode}") }}'
+    )
+    try:
+        match = query_result["results"]["bindings"][0]
+    except IndexError:
+        print(f"Couldn't find label for {qid}")
+        raise("label nof found for " + qid)
+    label = match["label"]["value"]
+    return label
+
+
 
 
 @lru_cache(maxsize=None)
