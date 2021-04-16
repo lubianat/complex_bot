@@ -31,7 +31,10 @@ def main():
 
     # Make a dataframe for all complexes of a given species
     list_of_complexes = utils.get_list_of_complexes(
-        dataset_urls, species_id=id, test_on_wikidata=test_on_wikidata)
+        dataset_urls,
+        species_id=id,
+        test_on_wikidata=test_on_wikidata,
+        max_complexes=5)
     login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 
     references = utils.prepare_refs(species_id=id)

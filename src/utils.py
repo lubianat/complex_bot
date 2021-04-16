@@ -14,7 +14,7 @@ from wikidataintegrator import wdi_core
 from wikidataintegrator.wdi_core import WDItemEngine
 
 
-def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
+def get_list_of_complexes(datasets, species_id, test_on_wikidata=True , max_complexes=999999):
     """
     Clean and process table of complexes
 
@@ -45,7 +45,7 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
     for complex_id in raw_table["#Complex ac"]:
         counter = counter + 1
         list_of_complexes.append(Complex(raw_table, complex_id))
-        if counter == 5:
+        if counter == max_complexes:
             break
     return list_of_complexes
 
