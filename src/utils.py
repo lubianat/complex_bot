@@ -9,6 +9,7 @@ from ftplib import FTP
 from functools import lru_cache, reduce
 from time import gmtime, strftime
 import pandas as pd
+from wikidata2df import wikidata2df
 from wikidataintegrator import wdi_core
 from wikidataintegrator.wdi_core import WDItemEngine
 
@@ -310,6 +311,45 @@ def get_wikidata_item_by_propertyvalue(property, value):
 
     qid = qid.split("/")[4]
     return qid
+
+
+
+def get_complex_portal_species_ids():
+    """Gets a dictionary of Complex portal datasets
+    Returns a dictionary of species as keys and dataset url as values.
+    """
+    domain = "ftp.ebi.ac.uk"
+    complex_data = "pub/databases/intact/complex/current/complextab/"
+
+    print("======  Getting Complex Portal Species IDs  ======")
+
+    ftp = FTP(domain)
+    ftp.login()
+    ftp.cwd(complex_data)
+    files = ftp.nlst()
+
+    species_list = []
+
+    for species in files:
+        if "tsv" in species:
+            species_list.append(species.replace(".tsv","").strip())
+
+    query = """
+    SELECT ?itemLabel ?id WHERE {
+        VALUES ?id { """ + '"' + '" "'.join(species_list) + '"' + """ }
+        ?item wdt:P685 ?id. 
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+
+    }
+
+    """
+    df = wikidata2df(query)
+    return df
+
+
+
+
+
 
 
 def get_complex_portal_dataset_urls():
