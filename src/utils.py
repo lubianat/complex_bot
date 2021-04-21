@@ -26,7 +26,7 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True , max_comp
         def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
         test_on_wikidata: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True.
 
-    Returns
+    Returns:
         list_of_complexes (list): Objects of the Complex class
 
     """
@@ -52,8 +52,13 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True , max_comp
 
 def update_complex(login_instance, protein_complex, references):
     """
+
+    Updates the information for an existing complex on Wikidata. 
+    If
     Args:
-        complex_dataframe (DataFrame): information about a complex properly formatted.
+        login_instance: A Wikidata Integrator login instance
+        protein_complex: An object of the class Complex containing the information for a protein complex
+        references: The set of references for WDI
     """
 
     instance_of = wdi_core.WDItemID(
@@ -135,7 +140,15 @@ def update_complex(login_instance, protein_complex, references):
         "de": "makromolekularer Komplex auffindbar in " + taxon_name
     }
 
-    wd_item = wdi_core.WDItemEngine(data=data)
+    properties_to_append_value = [
+        "P31",
+        "P703",
+        "P680",
+        "P681",
+        "P682",
+        "P527"
+    ]
+    wd_item = wdi_core.WDItemEngine(data=data,  append_value=properties_to_append_value)
     wd_item.set_label(label=label, lang="en")
     wd_item.set_aliases(aliases, lang='en')
     for lang, description in descriptions.items():

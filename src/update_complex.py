@@ -34,7 +34,7 @@ def main():
         dataset_urls,
         species_id=id,
         test_on_wikidata=test_on_wikidata,
-        max_complexes=5)
+        max_complexes=1)
     login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 
     references = utils.prepare_refs(species_id=id)
