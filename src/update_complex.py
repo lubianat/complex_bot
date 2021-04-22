@@ -19,14 +19,17 @@ def main():
         help="1 to exclude complexes on Wikidata, 0 to include",
         type=int,
         default=1)
+    parser.add_argument('--number', '-n', help="the number of complexes to add", type=int, default=999999)
+
 
     args = parser.parse_args()
 
     if len(sys. argv) < 4:
         sys.exit(
-            "Usage: python3 update_complex.py -s [species id] -w [boolean]")
+            "Usage: python3 update_complex.py -s [species id] -w [boolean] -n [number of complexes]")
     id = args.species
     test_on_wikidata = bool(args.wikidata)
+    number_of_complexes_to_add = args.number
     dataset_urls = utils.get_complex_portal_dataset_urls()
 
     # Make a dataframe for all complexes of a given species
@@ -34,7 +37,7 @@ def main():
         dataset_urls,
         species_id=id,
         test_on_wikidata=test_on_wikidata,
-        max_complexes=1)
+        max_complexes=number_of_complexes_to_add)
     login_instance = wdi_login.WDLogin(user=WDUSER, pwd=WDPASS)
 
     references = utils.prepare_refs(species_id=id)
