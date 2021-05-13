@@ -14,7 +14,9 @@ from wikidataintegrator import wdi_core
 from wikidataintegrator.wdi_core import WDItemEngine
 
 
-def get_list_of_complexes(datasets, species_id, test_on_wikidata=True , max_complexes=999999):
+def get_list_of_complexes(
+    datasets, species_id, test_on_wikidata=True, max_complexes=999999
+):
     """
     Clean and process table of complexes
 
@@ -53,7 +55,7 @@ def get_list_of_complexes(datasets, species_id, test_on_wikidata=True , max_comp
 def update_complex(login_instance, protein_complex, references):
     """
 
-    Updates the information for an existing complex on Wikidata. 
+    Updates the information for an existing complex on Wikidata.
     If
     Args:
         login_instance: A Wikidata Integrator login instance
@@ -70,9 +72,8 @@ def update_complex(login_instance, protein_complex, references):
     )
 
     complex_portal_id = wdi_core.WDString(
-        value=protein_complex.complex_id,
-        prop_nr="P7718",
-        references=references)
+        value=protein_complex.complex_id, prop_nr="P7718", references=references
+    )
 
     data = [instance_of, found_in_taxon, complex_portal_id]
 
@@ -119,10 +120,10 @@ def update_complex(login_instance, protein_complex, references):
         # Considers  that each term has only one GO type
         try:
             obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
-            prop = go_reference[go_reference["id"]
-                                == go_term]["go_props"].values[0]
+            prop = go_reference[go_reference["id"] == go_term]["go_props"].values[0]
             statement = wdi_core.WDItemID(
-                value=obj, prop_nr=prop, references=references)
+                value=obj, prop_nr=prop, references=references
+            )
             go_statements.append(statement)
         except:
             print("Problem with " + go_term)
@@ -137,22 +138,25 @@ def update_complex(login_instance, protein_complex, references):
         "pt": "complexo macromolecular encontrado em " + taxon_name,
         "pt-br": "complexo macromolecular encontrado em " + taxon_name,
         "nl": "macromoleculair complex gevonden in " + taxon_name,
-        "de": "makromolekularer Komplex auffindbar in " + taxon_name
+        "de": "makromolekularer Komplex auffindbar in " + taxon_name,
     }
 
-    properties_to_append_value = [
-        "P31",
-        "P703",
-        "P680",
-        "P681",
-        "P682",
-        "P527"
-    ]
-    wd_item = wdi_core.WDItemEngine(data=data,  append_value=properties_to_append_value)
+    properties_to_append_value = ["P31", "P703", "P680", "P681", "P682", "P527"]
+
+    fast_run_base_filter = {"P31": "Q22325163"}
+    wd_item = wdi_core.WDItemEngine(
+        data=data,
+        append_value=properties_to_append_value,
+        fast_run=True,
+        fast_run_base_filter=fast_run_base_filter,
+        debug=True,
+    )
     wd_item.set_label(label=label, lang="en")
-    wd_item.set_aliases(aliases, lang='en')
-    for lang, description in descriptions.items():
-        wd_item.set_description(description, lang=lang)
+    wd_item.set_aliases(aliases, lang="en")
+
+    # As fast-run is set, I will not update descriptions.
+    #    for lang, description in descriptions.items():
+    #        wd_item.set_description(description, lang=lang)
 
     wd_item.write(login_instance)
 
@@ -259,8 +263,7 @@ class Complex:
 
         # NCBI taxonomy ID (P685)
         tax_id = self.info["Taxonomy identifier"].values[0]
-        self.taxon_qid = get_wikidata_item_by_propertyvalue(
-            "P685", int(tax_id))
+        self.taxon_qid = get_wikidata_item_by_propertyvalue("P685", int(tax_id))
 
 
 def get_wikidata_complexes():
@@ -295,11 +298,9 @@ def get_wikidata_label(qid, langcode="en"):
         match = query_result["results"]["bindings"][0]
     except IndexError:
         print(f"Couldn't find label for {qid}")
-        raise("label nof found for " + qid)
+        raise ("label nof found for " + qid)
     label = match["label"]["value"]
     return label
-
-
 
 
 @lru_cache(maxsize=None)
@@ -326,7 +327,6 @@ def get_wikidata_item_by_propertyvalue(property, value):
     return qid
 
 
-
 def get_complex_portal_species_ids():
     """Gets a dictionary of Complex portal datasets
     Returns a dictionary of species as keys and dataset url as values.
@@ -345,24 +345,25 @@ def get_complex_portal_species_ids():
 
     for species in files:
         if "tsv" in species:
-            species_list.append(species.replace(".tsv","").strip())
+            species_list.append(species.replace(".tsv", "").strip())
 
-    query = """
+    query = (
+        """
     SELECT ?itemLabel ?id WHERE {
-        VALUES ?id { """ + '"' + '" "'.join(species_list) + '"' + """ }
+        VALUES ?id { """
+        + '"'
+        + '" "'.join(species_list)
+        + '"'
+        + """ }
         ?item wdt:P685 ?id. 
         SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
 
     }
 
     """
+    )
     df = wikidata2df(query)
     return df
-
-
-
-
-
 
 
 def get_complex_portal_dataset_urls():
@@ -440,15 +441,9 @@ def split_complexes(species_dataframe):
 
 
 def prepare_refs(species_id):
-    stated_in = wdi_core.WDItemID(
-        value="Q47196990",
-        prop_nr="P248",
-        is_reference=True)
+    stated_in = wdi_core.WDItemID(value="Q47196990", prop_nr="P248", is_reference=True)
     wikidata_time = strftime("+%Y-%m-%dT00:00:00Z", gmtime())
-    retrieved = wdi_core.WDTime(
-        wikidata_time,
-        prop_nr="P813",
-        is_reference=True)
+    retrieved = wdi_core.WDTime(wikidata_time, prop_nr="P813", is_reference=True)
 
     ftp_url = "ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/current/complextab"
     ref_url = wdi_core.WDString(ftp_url, prop_nr="P854", is_reference=True)
@@ -461,6 +456,7 @@ def prepare_refs(species_id):
     references = [[stated_in, retrieved, ref_url, ref_filename]]
     return references
 
+
 def get_cols_to_keep():
     keep = [
         "#Complex ac",
@@ -471,5 +467,4 @@ def get_cols_to_keep():
         "Identifiers (and stoichiometry) of molecules in complex",
         "Description",
     ]
-    return(keep)
-
+    return keep
