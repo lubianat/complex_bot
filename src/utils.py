@@ -83,10 +83,10 @@ def update_complex(login_instance, protein_complex, references):
         component_qid = component.qid
         print(f"Component QID: {component_qid}")
 
-        def isNaN(string):
+        def is_nan(string):
             return string != string
 
-        if isNaN(component_qid):
+        if is_nan(component_qid):
             break
 
         if quantity != "0" and not math.isnan(int(quantity)):
