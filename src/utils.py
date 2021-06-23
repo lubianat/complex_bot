@@ -56,7 +56,6 @@ def update_complex(login_instance, protein_complex, references):
     """
 
     Updates the information for an existing complex on Wikidata.
-    If
     Args:
         login_instance: A Wikidata Integrator login instance
         protein_complex: An object of the class Complex containing the information for a protein complex

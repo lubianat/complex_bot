@@ -12,6 +12,7 @@ Arguments:
 
     --species/-s : a species NCBI ID
     --wikidata/-w : 1 to add new complex to Wikidata, 0 to also update the existing ones.
+    --number/-n: The number of complexes to add to Wikidata.
 
 Currently, errors are added to the errors/log folder.
 
@@ -25,32 +26,32 @@ To know the current species covered by Complex Portal, run
 You should get a table similar to the one below:
 
 
-|    | itemLabel                       |      id |
-|---:|:--------------------------------|--------:|
-|  0 | house mouse                     |   10090 |
-|  1 | Marbled electric ray            |    7788 |
-|  2 | Oryctolagus cuniculus           |    9986 |
-|  3 | Red Junglefowl                  |    9031 |
-|  4 | Escherichia coli                |     562 |
-|  5 | Tetronarce californica          |    7787 |
-|  6 | Caenorhabditis elegans          |    6239 |
-|  7 | Drosophila melanogaster         |    7227 |
-|  8 | Ovis aries                      |    9940 |
-|  9 | Arabidopsis thaliana            |    3702 |
-| 10 | Lymnaea stagnalis               |    6523 |
-| 11 | Homo sapiens                    |    9606 |
-| 12 | Canis lupus familiaris          |    9615 |
-| 13 | African clawed frog             |    8355 |
-| 14 | Danio rerio                     |    7955 |
-| 15 | Bos taurus                      |    9913 |
-| 16 | wild boar                       |    9823 |
-| 17 | brown rat                       |   10116 |
-| 18 | Escherichia coli K-12           |   83333 |
-| 19 | SARSr-CoV                       |  694009 |
-| 20 | Pseudomonas aeruginosa PAO1     |  208964 |
-| 21 | Schizosaccharomyces pombe 972h- |  284812 |
-| 22 | Saccharomyces cerevisiae S288c  |  559292 |
-| 23 | SARS-CoV-2                      | 2697049 |
+|      | itemLabel                       |      id |
+| ---: | :------------------------------ | ------: |
+|    0 | house mouse                     |   10090 |
+|    1 | Marbled electric ray            |    7788 |
+|    2 | Oryctolagus cuniculus           |    9986 |
+|    3 | Red Junglefowl                  |    9031 |
+|    4 | Escherichia coli                |     562 |
+|    5 | Tetronarce californica          |    7787 |
+|    6 | Caenorhabditis elegans          |    6239 |
+|    7 | Drosophila melanogaster         |    7227 |
+|    8 | Ovis aries                      |    9940 |
+|    9 | Arabidopsis thaliana            |    3702 |
+|   10 | Lymnaea stagnalis               |    6523 |
+|   11 | Homo sapiens                    |    9606 |
+|   12 | Canis lupus familiaris          |    9615 |
+|   13 | African clawed frog             |    8355 |
+|   14 | Danio rerio                     |    7955 |
+|   15 | Bos taurus                      |    9913 |
+|   16 | wild boar                       |    9823 |
+|   17 | brown rat                       |   10116 |
+|   18 | Escherichia coli K-12           |   83333 |
+|   19 | SARSr-CoV                       |  694009 |
+|   20 | Pseudomonas aeruginosa PAO1     |  208964 |
+|   21 | Schizosaccharomyces pombe 972h- |  284812 |
+|   22 | Saccharomyces cerevisiae S288c  |  559292 |
+|   23 | SARS-CoV-2                      | 2697049 |
 
 # Main contributors
 
