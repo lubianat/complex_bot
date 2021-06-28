@@ -11,7 +11,6 @@ import sys
 
 parser = argparse.ArgumentParser()
 
-
 def main():
     parser.add_argument("--species", "-s", help="a species species_id", type=str)
     parser.add_argument(

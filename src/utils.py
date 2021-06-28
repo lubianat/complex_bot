@@ -24,9 +24,9 @@ def get_list_of_complexes(
 
     Args:
         datasets (DataFrame): one of the species datasets
-        species_id: The NCBI species ID
-        def get_list_of_complexes(datasets, species_id, test_on_wikidata=True):
-        test_on_wikidata: A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True.
+        species_id (str): The NCBI species ID
+        test_on_wikidata (bool): A boolean indicating whether to return only complexes that are or aren't on Wikidata. Defaults to True.
+        max_complexes (str): The maximum number of complexes to be modified on Wikidata
 
     Returns:
         list_of_complexes (list): Objects of the Complex class
@@ -37,8 +37,8 @@ def get_list_of_complexes(
     if test_on_wikidata:
         raw_table = remove_rows_on_wikidata(raw_table)
 
-    cols_to_keep = get_cols_to_keep()
-    raw_table = raw_table[cols_to_keep]
+    columns_to_keep = get_columns_to_keep()
+    raw_table = raw_table[columns_to_keep]
 
     list_of_complexes = []
     print("====== Parsing list to extract into class Complex ======")
@@ -124,7 +124,8 @@ def update_complex(login_instance, protein_complex, references):
                 value=obj, prop_nr=prop, references=references
             )
             go_statements.append(statement)
-        except:
+        except BaseException as e:
+            print(e)
             print("Problem with " + go_term)
 
     data.extend(go_statements)
@@ -140,6 +141,7 @@ def update_complex(login_instance, protein_complex, references):
         "de": "makromolekularer Komplex auffindbar in " + taxon_name,
     }
 
+    # For the list below, the bot will not remove values added on Wikidata
     properties_to_append_value = ["P31", "P703", "P680", "P681", "P682", "P527"]
 
     fast_run_base_filter = {"P31": "Q22325163"}
@@ -394,7 +396,7 @@ def get_complex_portal_dataset_urls():
     return cp_datasets
 
 
-def remove_rows_on_wikidata(complexp_dataframe):
+def remove_rows_on_wikidata(complex_dataframe):
     """
     Return complex portal entities that don't have Wikidata links.
     """
@@ -405,25 +407,16 @@ def remove_rows_on_wikidata(complexp_dataframe):
 
     merged_data = pd.merge(
         wikidata_complexes,
-        complexp_dataframe,
+        complex_dataframe,
         how="outer",
         left_on=["ComplexPortalID"],
         right_on=["#Complex ac"],
         indicator=True,
     )
     missing_from_wikidata = merged_data[merged_data["_merge"] == "right_only"][
-        complexp_dataframe.columns
+        complex_dataframe.columns
     ]
-    keep = [
-        "#Complex ac",
-        "Recommended name",
-        "Aliases for complex",
-        "Taxonomy identifier",
-        "Go Annotations",
-        "Identifiers (and stoichiometry) of molecules in complex",
-        "Description",
-    ]
-
+    keep = get_columns_to_keep()
     missing_from_wikidata = missing_from_wikidata[keep]
 
     return missing_from_wikidata
@@ -456,7 +449,7 @@ def prepare_refs(species_id):
     return references
 
 
-def get_cols_to_keep():
+def get_columns_to_keep():
     keep = [
         "#Complex ac",
         "Recommended name",
