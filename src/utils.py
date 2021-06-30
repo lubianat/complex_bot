@@ -78,7 +78,6 @@ def update_complex(login_instance, protein_complex, references):
 
     has_parts = []
     for component in protein_complex.list_of_components:
-
         quantity = component.quantity
         component_qid = component.qid
         print(f"Component QID: {component_qid}")
@@ -226,7 +225,6 @@ class Complex:
 
     def get_aliases(self):
         aliases_string = self.info["Aliases for complex"].values[0]
-
         # "-" represents NA in this column
         # Sometimes we get true NAs there
         if aliases_string == "-" or not isinstance(aliases_string, str):
@@ -261,7 +259,6 @@ class Complex:
             print(f"No GOs for {self.complex_id}")
 
     def get_wikidata_ids(self):
-
         # NCBI taxonomy ID (P685)
         tax_id = self.info["Taxonomy identifier"].values[0]
         self.taxon_qid = get_wikidata_item_by_propertyvalue("P685", int(tax_id))
@@ -269,9 +266,7 @@ class Complex:
 
 def get_wikidata_complexes():
     """Gets all Wikidata items with a Complex Portal ID property"""
-
     print("======  Getting complexes on Wikidata  ======")
-
     get_macromolecular = """
     SELECT ?item ?ComplexPortalID
     WHERE
@@ -291,7 +286,6 @@ def get_wikidata_label(qid, langcode="en"):
         qid (str): The qid to get the label
         langcode (str): The language code of the label
     """
-
     query_result = WDItemEngine.execute_sparql_query(
         f'SELECT ?label WHERE {{ wd:{qid} rdfs:label ?label. FILTER(LANG(?label)="{langcode}") }}'
     )
@@ -311,10 +305,10 @@ def get_wikidata_item_by_propertyvalue(property, value):
         property (str): The property to search
         value (str): The value of said property
     """
-
     query_result = WDItemEngine.execute_sparql_query(
         f'SELECT distinct ?item WHERE {{ ?item wdt:{property} "{value}" }}'
     )
+
     try:
         match = query_result["results"]["bindings"][0]
     except IndexError:
@@ -322,9 +316,10 @@ def get_wikidata_item_by_propertyvalue(property, value):
         with open("errors/log.csv", "a") as f:
             f.write(f"{value},'not found'\n")
         return pd.np.NaN
-    qid = match["item"]["value"]
 
+    qid = match["item"]["value"]
     qid = qid.split("/")[4]
+
     return qid
 
 
@@ -334,14 +329,11 @@ def get_complex_portal_species_ids():
     """
     domain = "ftp.ebi.ac.uk"
     complex_data = "pub/databases/intact/complex/current/complextab/"
-
     print("======  Getting Complex Portal Species IDs  ======")
-
     ftp = FTP(domain)
     ftp.login()
     ftp.cwd(complex_data)
     files = ftp.nlst()
-
     species_list = []
 
     for species in files:
@@ -373,21 +365,16 @@ def get_complex_portal_dataset_urls():
     """
     domain = "ftp.ebi.ac.uk"
     complex_data = "pub/databases/intact/complex/current/complextab/"
-
     print("======  Getting Complex Portal datasets via FTP  ======")
-
     ftp = FTP(domain)
     ftp.login()
     ftp.cwd(complex_data)
     files = ftp.nlst()
-
-    cp_datasets = defaultdict()
-
     string_replacements = (".tsv", ""), ("_", " ")
+    cp_datasets = defaultdict()
 
     for species in files:
         if "README" not in species:
-
             current_key = reduce(
                 lambda a, kv: a.replace(*kv), string_replacements, species
             )
@@ -404,7 +391,6 @@ def remove_rows_on_wikidata(complex_dataframe):
     print("======  Checking which complexes are not on Wikidata  ======")
 
     wikidata_complexes = get_wikidata_complexes()
-
     merged_data = pd.merge(
         wikidata_complexes,
         complex_dataframe,
@@ -418,7 +404,6 @@ def remove_rows_on_wikidata(complex_dataframe):
     ]
     keep = get_columns_to_keep()
     missing_from_wikidata = missing_from_wikidata[keep]
-
     return missing_from_wikidata
 
 
@@ -436,15 +421,13 @@ def prepare_refs(species_id):
     stated_in = wdi_core.WDItemID(value="Q47196990", prop_nr="P248", is_reference=True)
     wikidata_time = strftime("+%Y-%m-%dT00:00:00Z", gmtime())
     retrieved = wdi_core.WDTime(wikidata_time, prop_nr="P813", is_reference=True)
-
     ftp_url = "ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/current/complextab"
     ref_url = wdi_core.WDString(ftp_url, prop_nr="P854", is_reference=True)
-
     filename_in_archive = f"{species_id}.tsv"
+    # reference of filename in archive (P7793)
     ref_filename = wdi_core.WDString(
         filename_in_archive, prop_nr="P7793", is_reference=True
     )
-
     references = [[stated_in, retrieved, ref_url, ref_filename]]
     return references
 
