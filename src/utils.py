@@ -75,7 +75,6 @@ def update_complex(login_instance, protein_complex, references):
     )
 
     data = [instance_of, found_in_taxon, complex_portal_id]
-
     has_parts = []
     for component in protein_complex.list_of_components:
         quantity = component.quantity
@@ -112,7 +111,6 @@ def update_complex(login_instance, protein_complex, references):
 
     # Reference table via https://w.wiki/uW2
     go_statements = []
-
     go_reference = pd.read_csv("./reference_go_terms.csv")
     for go_term in protein_complex.go_ids:
         # Considers  that each term has only one GO type
@@ -126,6 +124,8 @@ def update_complex(login_instance, protein_complex, references):
         except BaseException as e:
             print(e)
             print("Problem with " + go_term)
+            with open("errors/log.csv", "a") as f:
+                f.write(f"{value},'problem with GO term'\n")
 
     data.extend(go_statements)
     label = protein_complex.name
@@ -236,11 +236,12 @@ class Complex:
         molecules_column = "Identifiers (and stoichiometry) of molecules in complex"
         molecules_string = self.info[molecules_column].values[0]
         molecules = molecules_string.split("|")
-        matches = [re.search(r"\((.*)\)", i) for i in molecules]
-        quantities = [m.group(1) for m in matches]
 
-        matches = [re.search(r"(.*)\(.*\)", i) for i in molecules]
-        uniprot_ids = [m.group(1) for m in matches]
+        matches_quantities = [re.search(r"\((.*)\)", i) for i in molecules]
+        quantities = [m.group(1) for m in matches_quantities]
+
+        matches_uniprot_ids = [re.search(r"(.*)\(.*\)", i) for i in molecules]
+        uniprot_ids = [m.group(1) for m in matches_uniprot_ids]
 
         component_and_quantities = dict(zip(uniprot_ids, quantities))
         for external_id in component_and_quantities:
