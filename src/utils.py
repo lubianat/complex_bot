@@ -147,16 +147,14 @@ def update_complex(login_instance, protein_complex, references):
     wd_item = wdi_core.WDItemEngine(
         data=data,
         append_value=properties_to_append_value,
-        fast_run=True,
-        fast_run_base_filter=fast_run_base_filter,
         debug=True,
     )
     wd_item.set_label(label=label, lang="en")
     wd_item.set_aliases(aliases, lang="en")
 
     # As fast-run is set, I will not update descriptions.
-    #    for lang, description in descriptions.items():
-    #        wd_item.set_description(description, lang=lang)
+    for lang, description in descriptions.items():
+        wd_item.set_description(description, lang=lang)
 
     wd_item.write(login_instance)
 
@@ -422,7 +420,7 @@ def prepare_refs(species_id):
     stated_in = wdi_core.WDItemID(value="Q47196990", prop_nr="P248", is_reference=True)
     wikidata_time = strftime("+%Y-%m-%dT00:00:00Z", gmtime())
     retrieved = wdi_core.WDTime(wikidata_time, prop_nr="P813", is_reference=True)
-    ftp_url = "ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/current/complextab"
+    ftp_url = "https://ftp.ebi.ac.uk/pub/databases/intact/complex/current/complextab"
     ref_url = wdi_core.WDString(ftp_url, prop_nr="P854", is_reference=True)
     filename_in_archive = f"{species_id}.tsv"
     # reference of filename in archive (P7793)
