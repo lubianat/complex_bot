@@ -113,14 +113,22 @@ def update_complex(login_instance, protein_complex, references):
 
     data.extend(has_parts)
 
-    # Reference table via https://w.wiki/uW2
+    # Reference table via https://w.wiki/3dTC
     go_statements = []
     go_reference = pd.read_csv("./reference_go_terms.csv")
     for go_term in protein_complex.go_ids:
         # Considers  that each term has only one GO type
         try:
-            obj = go_reference[go_reference["id"] == go_term]["go_term"].values[0]
-            prop = go_reference[go_reference["id"] == go_term]["go_props"].values[0]
+            row = go_reference[go_reference["id"] == go_term]
+            obj = row["go_term_qid"].values[0]
+            label = row["go_termLabel"].values[0]
+            prop = row["go_props_qid"].values[0]
+
+            # Heuristic: Cell components containing the word "complex" in the label
+            # are actually superclasses.
+            if "complex" in label and prop == "P681":
+                prop = "P279"
+
             statement = wdi_core.WDItemID(
                 value=obj, prop_nr=prop, references=references
             )
