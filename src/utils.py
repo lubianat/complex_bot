@@ -63,7 +63,11 @@ def update_complex(login_instance, protein_complex, references):
     """
 
     instance_of = wdi_core.WDItemID(
-        value="Q22325163", prop_nr="P31", references=references
+        value="Q22325163", prop_nr="P279", references=references
+    )
+
+    subclass_of = wdi_core.WDItemID(
+        value="Q107509287", prop_nr="P31", references=references
     )
 
     found_in_taxon = wdi_core.WDItemID(
@@ -74,7 +78,7 @@ def update_complex(login_instance, protein_complex, references):
         value=protein_complex.complex_id, prop_nr="P7718", references=references
     )
 
-    data = [instance_of, found_in_taxon, complex_portal_id]
+    data = [instance_of, subclass_of, found_in_taxon, complex_portal_id]
     has_parts = []
     for component in protein_complex.list_of_components:
         quantity = component.quantity
@@ -125,7 +129,7 @@ def update_complex(login_instance, protein_complex, references):
             print(e)
             print("Problem with " + go_term)
             with open("errors/log.csv", "a") as f:
-                f.write(f"{value},'problem with GO term'\n")
+                f.write(f"{go_term},'problem with GO term'\n")
 
     data.extend(go_statements)
     label = protein_complex.name
@@ -141,9 +145,8 @@ def update_complex(login_instance, protein_complex, references):
     }
 
     # For the list below, the bot will not remove values added on Wikidata
-    properties_to_append_value = ["P31", "P703", "P680", "P681", "P682", "P527"]
+    properties_to_append_value = ["P703", "P680", "P681", "P682", "P527"]
 
-    fast_run_base_filter = {"P31": "Q22325163"}
     wd_item = wdi_core.WDItemEngine(
         data=data,
         append_value=properties_to_append_value,
