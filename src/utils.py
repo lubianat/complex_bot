@@ -12,6 +12,10 @@ import pandas as pd
 from wikidata2df import wikidata2df
 from wikidataintegrator import wdi_core
 from wikidataintegrator.wdi_core import WDItemEngine
+import json
+
+with open("mappings.json", "r") as fp:
+    MAPPINGS = json.load(fp)
 
 
 def get_list_of_complexes(
@@ -186,6 +190,10 @@ class ComplexComponent:
         elif "CPX" in self.external_id:
             # Complex Portal ID (P7718)
             self.qid = get_wikidata_item_by_propertyvalue("P7718", self.external_id)
+        elif "URS" in self.external_id:
+            # RNACentral ID (P8697)
+            self.qid = get_wikidata_item_by_propertyvalue("P8697", self.external_id)
+
         else:
             # UniProt protein ID (P352)
             self.qid = get_wikidata_item_by_propertyvalue("P352", self.external_id)
@@ -309,12 +317,19 @@ def get_wikidata_label(qid, langcode="en"):
 
 
 @lru_cache(maxsize=None)
-def get_wikidata_item_by_propertyvalue(property, value):
+def get_wikidata_item_by_propertyvalue(property, value, mappings=MAPPINGS):
     """Gets a Wikidata item for a determined property-value pair
     Args:
         property (str): The property to search
         value (str): The value of said property
     """
+
+    try:
+        qid = mappings[property][value]
+        return qid
+    except:
+        pass
+
     query_result = WDItemEngine.execute_sparql_query(
         f'SELECT distinct ?item WHERE {{ ?item wdt:{property} "{value}" }}'
     )
@@ -323,6 +338,11 @@ def get_wikidata_item_by_propertyvalue(property, value):
         match = query_result["results"]["bindings"][0]
     except IndexError:
         print(f"Couldn't find item for {value}")
+
+        if "URS" in value:
+            with open("errors/rna_central_log.csv", "a") as f:
+                f.write(f"{value},'not found'\n")
+
         with open("errors/log.csv", "a") as f:
             f.write(f"{value},'not found'\n")
         return pd.np.NaN
@@ -330,6 +350,14 @@ def get_wikidata_item_by_propertyvalue(property, value):
     qid = match["item"]["value"]
     qid = qid.split("/")[4]
 
+    try:
+        mappings[property][value] = str(qid)
+    except:
+        mappings[property] = {}
+        mappings[property][value] = str(qid)
+
+    with open("mappings.json", "w") as fp:
+        json.dump(MAPPINGS, fp, sort_keys=True, indent=4)
     return qid
 
 
