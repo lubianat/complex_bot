@@ -326,7 +326,7 @@ def get_wikidata_item_by_propertyvalue(property, value, mappings=MAPPINGS):
 
     try:
         qid = mappings[property][value]
-        return qid
+        return str(qid)
     except:
         pass
 
@@ -351,10 +351,10 @@ def get_wikidata_item_by_propertyvalue(property, value, mappings=MAPPINGS):
     qid = qid.split("/")[4]
 
     try:
-        mappings[property][value] = str(qid)
+        mappings[property][str(value)] = str(qid)
     except:
         mappings[property] = {}
-        mappings[property][value] = str(qid)
+        mappings[property][str(value)] = str(qid)
 
     with open("mappings.json", "w") as fp:
         json.dump(MAPPINGS, fp, sort_keys=True, indent=4)
