@@ -1,2 +1,3 @@
 pandas==1.1.2
 wikidataintegrator==0.7.4
+wikidata2df
