@@ -19,7 +19,7 @@ Currently, errors are added to the errors/log folder.
 To run for all species, run: 
 
 ```
-python3 update_all_complexes.py -w 0 -n 99999
+python3 src/update_all_complexes.py -w 0 -n 99999
 
 ```
 

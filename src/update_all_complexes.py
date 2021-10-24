@@ -5,6 +5,7 @@
 import pandas as pd
 from wikidataintegrator import wdi_login
 import utils
+from login import WDPASS, WDUSER
 
 # Imported from the environment on Jenkins
 # from login import WDPASS, WDUSER
@@ -12,14 +13,18 @@ import argparse
 import sys
 import os
 
+print(WDUSER)
 print("Logging in...")
 if "WDUSER" in os.environ and "WDPASS" in os.environ:
     WDUSER = os.environ["WDUSER"]
     WDPASS = os.environ["WDPASS"]
 else:
-    raise ValueError(
-        "WDUSER and WDPASS must be specified in local.py or as environment variables"
-    )
+    try:
+        print(WDUSER)
+    except:
+        raise ValueError(
+            "WDUSER and WDPASS must be specified in local.py or as environment variables"
+        )
 
 parser = argparse.ArgumentParser()
 

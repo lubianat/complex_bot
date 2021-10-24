@@ -1,0 +1,48 @@
+from shexer.shaper import Shaper
+from shexer.consts import NT, SHEXC, SHACL_TURTLE
+
+target_graph = """
+<http://example.org/Jimmy> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Jimmy> <http://xmlns.com/foaf/0.1/age> "23"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/Jimmy> <http://xmlns.com/foaf/0.1/name> "Jimmy" .
+<http://example.org/Jimmy> <http://xmlns.com/foaf/0.1/familyName> "Jones" .
+<http://example.org/Sarah> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Sarah> <http://xmlns.com/foaf/0.1/age> "22"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/Sarah> <http://xmlns.com/foaf/0.1/name> "Sarah" .
+<http://example.org/Sarah> <http://xmlns.com/foaf/0.1/familyName> "Salem" .
+<http://example.org/Bella> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Bella> <http://xmlns.com/foaf/0.1/age> "56"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/Bella> <http://xmlns.com/foaf/0.1/name> "Isabella" .
+<http://example.org/David> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/David> <http://xmlns.com/foaf/0.1/name> "David" .
+<http://example.org/David> <http://xmlns.com/foaf/0.1/familyName> "Doulofeau" .
+<http://example.org/David> <http://xmlns.com/foaf/0.1/knows> <http://example.org/Sarah> .
+<http://example.org/HumanLike> <http://xmlns.com/foaf/0.1/name> "Person" .
+<http://example.org/HumanLike> <http://xmlns.com/foaf/0.1/familyName> "Maybe" .
+<http://example.org/HumanLike> <http://xmlns.com/foaf/0.1/age> "99"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/HumanLike> <http://xmlns.com/foaf/0.1/knows> <http://example.org/David> .
+<http://example.org/x1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .
+<http://example.org/x1> <http://xmlns.com/foaf/0.1/depiction> "A thing that s nice" .
+<http://example.org/x1> <http://xmlns.com/foaf/0.1/title> "A nice thing" .
+<http://example.org/x2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .
+<http://example.org/x2> <http://xmlns.com/foaf/0.1/title> "Another thing" .
+"""
+
+
+namespaces = {"http://example.org/": "ex",
+            "http://www.w3.org/XML/1998/namespace/": "xml",
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
+            "http://www.w3.org/2000/01/rdf-schema#": "rdfs",
+            "http://www.w3.org/2001/XMLSchema#": "xsd",
+            "http://xmlns.com/foaf/0.1/": "foaf"
+            }
+
+shaper = Shaper(raw_graph=target_graph,
+                namespaces_dict=namespaces,
+                all_classes_mode=True,
+                allow_opt_cardinality=False)
+
+res = shaper.shex_graph(string_output=True,
+                        output_format=SHEXC,
+                        acceptance_threshold=0.4)
+print(res)

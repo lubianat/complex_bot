@@ -1,0 +1,3 @@
+[console_scripts]
+wikidata2csv = wikidata2df.cli:main
+
