@@ -2,17 +2,15 @@
 # Copyright (c) 2020, jvfe
 # https://github.com/jvfe/wdt_contribs/tree/master/complex_portal/src
 # Hacked during BioHackathon Europe 2021 by Tiago Lubiana
-from time import gmtime, strftime
 
+from time import gmtime, strftime
 import pandas as pd
-from wikidataintegrator import wdi_login
 import utils
 from login import WDPASS, WDUSER
 import argparse
 import sys
 from SPARQLWrapper import SPARQLWrapper, JSON
-import requests
-
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 
@@ -36,13 +34,10 @@ def main():
 
     args = parser.parse_args()
 
-    if len(sys.argv) < 4:
-        sys.exit(
-            "Usage: python3 add_papers_to_complexes.py -s [species id] -w [boolean] -n [number of complexes]"
-        )
+    if len(sys.argv) < 2:
+        sys.exit("Usage: python3 add_papers_to_complexes.py -s [species id]")
+
     species_id = args.species
-    test_on_wikidata = bool(args.wikidata)
-    number_of_complexes_to_add = args.number
     dataset_urls = utils.get_complex_portal_dataset_urls()
 
     raw_table = pd.read_table(dataset_urls[species_id], na_values=["-"])
@@ -51,13 +46,13 @@ def main():
     import time
 
     cpx_list = []
-    for i, row in raw_table.iterrows():
+    for i, row in tqdm(raw_table.iterrows(), total=raw_table.shape[0]):
 
         time.sleep(0.3)
 
         try:
-            cpx = row["#Complex ac"]t
-            print(cpx)
+            cpx = row["#Complex ac"]
+            tqdm.write(cpx)
             cpx_list.append(cpx)
 
             cpx_list = list(set(cpx_list))
@@ -73,7 +68,7 @@ def main():
             xrefs_in_pubmed = list(set(xrefs_in_pubmed))
             pmids_in_sparql_format = '"' + '" "'.join(xrefs_in_pubmed) + '"'
 
-            print(pmids_in_sparql_format)
+            tqdm.write(pmids_in_sparql_format)
             query = (
                 """
             SELECT 
@@ -153,7 +148,7 @@ def main():
         except:
             with open("log.txt", "a") as f2:
                 f2.write(cpx + "\n")
-            print("error")
+            tqdm.write("error")
             pass
 
 
